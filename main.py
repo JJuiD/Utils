@@ -6,8 +6,9 @@ from PyQt6.QtWidgets import *
 
 from plugin.csv.base import CsvPlugin
 
-from qt_material import apply_stylesheet
+# from qt_material import apply_stylesheet
 from easy.user_default import UserDefault
+from view.data import initMainWindow
 from view.menu import MenuBar
 
 
@@ -15,12 +16,19 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.initEvent()
-        self.createMenuBar()
+        self.initCentralWidget()
+        self.initMenuBar()
+
+        initMainWindow(self)
 
     def initEvent(self):
         self.restoreGeometry(UserDefault.getForeverLocalKey("window_geometry"))
 
-    def createMenuBar(self):
+    def initCentralWidget(self):
+        self.centerWidget = QWidget()
+        self.setCentralWidget(self.centerWidget)
+
+    def initMenuBar(self):
         menuBar = MenuBar(self)
         self.setMenuBar(menuBar)
 

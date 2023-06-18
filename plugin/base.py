@@ -9,8 +9,16 @@ PluginList = []
 class ModelProxy:
     def __init__(self, model):
         self._model = model
-    def showMainView(self, parent):
-        pass
+        self._view = None # 可能会有多个？
+        self._isViewCreate = False
+
+        self.init()
+
+    def isViewCreate(self):
+        return self._isViewCreate
+    def setViewCreate(self, state):
+        self._isViewCreate = state
+    def init(self): pass
     def getMenuBar(self):
         pass
 
@@ -28,6 +36,11 @@ class Idler:
         return self
     def _notify(self, key):
         pass
+
+class IdlerList:
+    def __init__(self, value=None):
+        self._value = value
+
 
 class Plugin(Singleton):
     def __init__(self):

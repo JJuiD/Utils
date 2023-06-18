@@ -9,18 +9,35 @@ from view.data import MenuBarData
 
 
 class CsvExportType(Enum):
-    Lua = 1
+    Lua = 0
+    CSharp = 1
 
 class CsvModelProxy(ModelProxy):
-    def showMainView(self, parent):
-        return CsvView(parent)
-
     def getMenuBar(self):
         return MenuBarData("csv", [
-            ["导出类型", "", self.onClickExportType]
+            ["窗口", "", self.onCreateCsvView]
         ])
-    def onClickExportType(self):
-        pass
+    def onCreateCsvView(self, *args, **kwargs):
+        print("onCreateCsvView args", args)
+        print("onCreateCsvView kwargs", kwargs)
+
+        if self.isViewCreate():
+            return
+
+        self._view = CsvView(self)
+        self.setViewCreate(True)
+
+    def getComBoBoxItems(self):
+        return [
+            "lua",
+            "c#"
+        ]
+
+    def setExportType(self, index):
+        print("setExportType", CsvExportType(index))
+
+
+
 class CsvPlugin_(Plugin):
     def __init__(self):
         Plugin.__init__(self)
@@ -30,5 +47,6 @@ class CsvPlugin_(Plugin):
 
     def getModel(self):
         return CsvModelProxy(self)
+
 
 CsvPlugin = CsvPlugin_()
