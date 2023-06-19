@@ -3,6 +3,7 @@ import csv
 import sys
 
 from easy.file import *
+from easy.log import Log
 
 #####################################
 # 全局配置
@@ -24,16 +25,15 @@ LUA_NIL_VALUE = 'nil'
 
 #####################################
 # 运行时全局变量
-g_luaTableMap = {}
-g_luaFileTableCache = {}  # {txt: [uuid, src, cnt, replace_cnt]}
-g_luaFileTableUUIDMap = {}  # {uuid: txt}
-g_UUID = 0
-g_makeDeep = 0
-g_luaTypeString = ["", "LUA_BOOL", "LUA_NUM", "LUA_STRING", "LUA_ARRAY", "LUA_MAP", "LUA_CSV", "LUA_NIL"]
-g_space = 0
-g_spaceIndent = 4
-g_spaceStr = ' '*g_spaceIndent
-g_notes_tag = "__note"
+gLuaTableMap = {}
+gLuaFileTableCache = {}  # {txt: [uuid, src, cnt, replace_cnt]}
+gLuaFileTableUUIDMap = {}  # {uuid: txt}
+gUUID = 0
+gLuaTypeString = ["", "LUA_BOOL", "LUA_NUM", "LUA_STRING", "LUA_ARRAY", "LUA_MAP", "LUA_CSV", "LUA_NIL"]
+gSpace = 0
+gSpaceIndent = 4
+gSpaceStr = ' '*gSpaceIndent
+gNotesTag = "__note"
 
 space = 0
 
@@ -55,7 +55,7 @@ def dump(data):
         return ret
 
     def _dump(_data,indent,isValue = False):
-        space = indent * g_spaceStr
+        space = indent * gSpaceStr
         typ = type(_data)
         str = ''
         if typ == list or typ == dict:
@@ -63,7 +63,7 @@ def dump(data):
                 str += space
             str += ('[' if typ == list else '{')
             for k in pairs(typ,_data):
-                str += '\n{0}{1}'.format((indent + 1)*g_spaceStr,buildStr(typ,k,_dump(_data[k],indent + 1, True)))
+                str += '\n{0}{1}'.format((indent + 1)*gSpaceStr,buildStr(typ,k,_dump(_data[k],indent + 1, True)))
             str += '\n{0}{1}'.format(space,(']' if typ == list else '}'))
         else:
             return _data
@@ -75,10 +75,8 @@ def isMap(s):
     s = strSys2User(s)
     return s[0] == '{' and s[-1] == '}'
 
-
 def isCsv(s):
     return s.endswith(".csv") or s.endswith(".xls") or s.endswith(".xlsx")
-
 
 def isNil(s):
     if len(s) == 0:
@@ -101,10 +99,8 @@ def isCompatibility(t, castType):
         return True
     return False
 
-
 def isBool(s):
     return s in ('true', 'false', 'True', 'False', 'TRUE', 'FALSE')
-
 
 def isInt(s):
     try:
@@ -172,8 +168,8 @@ def autoMake(s):
     return makeElem(luaType, s)
 
 def exportStr(s):
-    global g_space
-    g_space = 0
+    global gSpace
+    gSpace = 0
 
     # data = dump(autoMake(s))
     # return ','.join(autoMake(s))
@@ -213,7 +209,7 @@ def makeString(s):
 # 		fileName = fileName[:-4] # delete .csv
 #
 # 	if len(dirList) == 0:
-# 		g_luaTableMap[LUA_MODULE_NAME + "." + fileName] = True
+# 		gLuaTableMap[LUA_MODULE_NAME + "." + fileName] = True
 # 		return '', LUA_DIR_FUNC(LUA_MODULE_NAME, fileName), LUA_MODULE_NAME + "." + fileName
 #
 # 	varPerList = []
@@ -221,10 +217,10 @@ def makeString(s):
 # 	varName = LUA_MODULE_NAME
 # 	luaVarPath = LUA_MODULE_NAME
 # 	for i in xrange(0, len(dirList)):
-# 		if luaVarPath not in g_luaTableMap:
+# 		if luaVarPath not in gLuaTableMap:
 # 			varPerList.append("%s = {}\r\n" % varName)
 # 			if not isRel:
-# 				g_luaTableMap[luaVarPath] = True
+# 				gLuaTableMap[luaVarPath] = True
 # 		varName = LUA_DIR_FUNC(varName, dirList[i])
 # 		# varName = varName + "['%s']" % dirList[i]
 # 		luaVarPath = luaVarPath + '.' + dirList[i]
@@ -279,15 +275,15 @@ def autoUser2Sys(s):
 
 
 def uuidname():
-    global g_UUID
-    g_UUID += 1
-    return '__predefine_t__[%d]' % g_UUID
+    global gUUID
+    gUUID += 1
+    return '__predefine_t__[%d]' % gUUID
 
 
 def makeArray(s):
     # print 'makeArray', s
-    global g_space
-    g_space = g_space + 1
+    global gSpace
+    gSpace = gSpace + 1
     array = splitToArrayByDelim(s)
     array = [autoMake(autoUser2Sys(x)) for x in array]
     # array中间为空的需要保留nil
@@ -296,8 +292,8 @@ def makeArray(s):
 
 def makeMap(s):
     # print 'makeMap', s
-    global g_space
-    g_space = g_space + 1
+    global gSpace
+    gSpace = gSpace + 1
 
     array = splitToArrayByDelim(s)
     mapp = {}
@@ -332,7 +328,7 @@ def makeMap(s):
 
 
 def showTypeString(luaType):
-    return '%d(%s)' % (luaType, g_luaTypeString[luaType])
+    return '%d(%s)' % (luaType, gLuaTypeString[luaType])
 
 
 def makeElem(luaType, strValue):
@@ -361,7 +357,6 @@ def makeElem(luaType, strValue):
 
 def exportLua(s):
     s = autoMake(s)
-
     def buildStr(typ,k,v = ''):
         if typ == list:
             return "[{0}]={1}".format(k+1,v)
@@ -379,7 +374,7 @@ def exportLua(s):
         return ret
 
     def _dump(_data, indent,isValue = False):
-        space = indent * g_spaceStr
+        space = indent * gSpaceStr
         typ = type(_data)
         fms = ''
         if typ == list or typ == dict:
@@ -410,106 +405,142 @@ def exportLua(s):
 
     return _dump(s, 0)
 
-def write_line_str(fo, str2):
+def writeLineStr(fo, str2):
     global space
     fo.writelines("\n"+ "\t"*space + str2)
 
-def write_table_str(fo, str2):
-    write_line_str(fo, str2)
+def writeWrap(fo, str2):
+    writeLineStr(fo, str2)
     global space
     space = space + 1
 
-def write_table_over_str(fo, str2):
+def writeWrapEnd(fo, str2):
     global space
     space = space - 1
-    write_line_str(fo, str2)
+    writeLineStr(fo, str2)
 
+class Process:
+    Suffix = None
+    Note = None
+    Dict = None
+    DictEnd = None
 
-if __name__ == '__main__':
-    input_path = sys.argv[1]
-    out_path = sys.argv[2]
+    def __init__(self):
+        self._file = None
+        self._namespace = None
+        self._outpath = None
+        self._defaultArg = []
+        self._defaultVal = []
 
-    print("input_path", input_path)
-    print("out_path", out_path)
+    def writeNote(self, s):
+        writeLineStr(self._file, self.Note % s)
+    def writeDict(self, s=None, isOver=False):
+        if isOver == True:
+            writeWrapEnd(self._file, self.DictEnd)
+        else:
+            writeWrap(self._file, self.Dict % s)
+    def writeBegin(self, outPath, fileName): pass
+    def writeEnd(self): pass
+    def writeOver(self, csvList): pass
+    def clear(self):
+        self._file = None
+        self._namespace = None
+        self._outpath = None
+        self._defaultArg.clear()
+        self._defaultVal.clear()
+    def run(self, inputPath, outPath):
+        Log.n("csv Process run, export as ", self.Suffix)
 
-    default_arg = []
-    default_val = []
-    csv_list = []
+        self._outpath = outPath
+        self._defaultArg = []
+        self._defaultVal = []
+        csvList = []
 
-    delFile(out_path)
+        delFile(self._outpath)
 
-    for file in getFiles(input_path, '.csv'):
-        with open(file["path"], 'r', encoding='utf-8') as f:
-            # print(out_path + file["name"])
-            file_lua = open(out_path + file["name"] + ".lua", "w", encoding='utf-8')
+        for file in getFiles(inputPath, '.csv'):
+            with open(file["path"], 'r', encoding='utf-8') as f:
+                fcsv = csv.reader(f)
+                recordRowIndex = 3
 
-            f_csv = csv.reader(f)
-            record_row_index = 3
-            space = 0
+                csvList.append(file["name"])
+                self.writeBegin(file["name"])
 
-            lua_table = "csv." + file["name"]
-            csv_list.append(file["name"])
-            write_line_str(file_lua, "-- %s" % (lua_table))
-            write_table_str(file_lua, "%s = {" % (lua_table))
-            keys = ""
-
-            for row in f_csv:
-                if record_row_index <= 0 and row[0] != '':
-                    pass
-                    for i in range(len(row)):
-                        if i == 0:
-                            # csv_head = "[%s]" % (row[0])
-                            write_table_str(file_lua, "[%s] = {" % (row[0]))
-                        elif default_arg[i] != g_notes_tag:
-                            val = row[i]
-                            if val == '':
-                                val = default_val[i]
-                            write_line_str(file_lua, ("%s = %s,") % (default_arg[i], exportLua(val)))
-                            if i == (len(row)-1):
-                                write_table_over_str(file_lua, "},")
-                else:
-                    if record_row_index == 3:
-                        default_arg = {}
-                        for k in range(len(row)):
-                            if k == 0 or "_" in row[k]:
-                                default_arg[k] = g_notes_tag
-                            else:
-                                default_arg[k] = row[k]
-                        print("default_arg", default_arg)
-                    elif record_row_index == 2:
-                        default_val = {}
-                        for k in range(len(row)):
-                            if default_arg[k] != g_notes_tag:
-                                default_val[k] = row[k]
-                        print("default_val", default_val)
-                    record_row_index = record_row_index - 1
-
-            s = ""
-            write_table_str(file_lua, "__default = {")
-            write_table_str(file_lua, "__index = {")
-            for k in range(1, len(default_arg)):
-                if default_arg[k] != g_notes_tag:
-                    v = default_val[k]
-                    key = default_arg[k]
-                    if s == "":
-                        s = "'%s'" % key
+                for row in fcsv:
+                    if recordRowIndex <= 0 and row[0] != '':
+                        pass
+                        for i in range(len(row)):
+                            if i == 0:
+                                # csv_head = "[%s]" % (row[0])
+                                self.writeDict(row[0])
+                            elif self._defaultArg[i] != gNotesTag:
+                                val = row[i]
+                                if val == '':
+                                    val = self._defaultVal[i]
+                                writeLineStr(self._file, ("%s = %s,") % (self._defaultArg[i], exportLua(val)))
+                                if i == (len(row) - 1):
+                                    self.writeDict(isOver=True)
                     else:
-                        s = s + ",'%s'" % key
-                    write_line_str(file_lua, "%s = %s," % (key, exportLua(v)))
-            write_line_str(file_lua, "__order = {%s}" % (s))
-            write_table_over_str(file_lua, "}")
-            write_table_over_str(file_lua, "}")
-            write_table_over_str(file_lua, "}")
-            # write_line_str(file_lua, "return csv.test")
-            file_lua.close()
-                # write_line_str(file_lua, "%s.__order = {%s}" % (lua_table, keys))
-                # write_line_str(file_lua, "_setDefalutMeta(%s)" % (lua_table))
+                        if recordRowIndex == 3:
+                            self._defaultArg = {}
+                            for k in range(len(row)):
+                                if k == 0 or "_" in row[k]:
+                                    self._defaultArg[k] = gNotesTag
+                                else:
+                                    self._defaultArg[k] = row[k]
+                            print("self._defaultArg", self._defaultArg)
+                        elif recordRowIndex == 2:
+                            self._defaultVal = {}
+                            for k in range(len(row)):
+                                if self._defaultArg[k] != gNotesTag:
+                                    self._defaultVal[k] = row[k]
+                            print("self._defaultVal", self._defaultVal)
+                        recordRowIndex = recordRowIndex - 1
+                self.writeEnd()
+                # writeLineStr(self._file, "return csv.test")
+                # writeLineStr(self._file, "%s.__order = {%s}" % (namespace, keys))
+                # writeLineStr(self._file, "_setDefalutMeta(%s)" % (namespace))
+            self.writeOver(csvList)
+class LuaProcess(Process):
+    Suffix = "lua"
+    Note = "-- %s"
+    Dict = "%s = {"
+    DictEnd = "}"
 
-    file_lua = open(out_path + "csv.lua", "w", encoding='utf-8')
-    write_line_str(file_lua, "globals.csv = {}\n")
-    for v in csv_list:
-        write_line_str(file_lua, 'require "config.%s"' % (v))
-    file_lua.close()
+    def __init__(self):
+        Process.__init__(self)
 
+    def writeBegin(self, fileName):
+        self._file = open(self._outpath + fileName + "." + self.Suffix, "w", encoding='utf-8')
+        self._namespace = "csv." + fileName
 
+        self.writeNote(self._namespace)
+        self.writeDict(self._namespace)
+    def writeEnd(self):
+        s = ""
+        self.writeDict("__default")
+        self.writeDict("__index")
 
+        for k in range(1, len(self._defaultArg)):
+            if self._defaultArg[k] != gNotesTag:
+                v = self._defaultVal[k]
+                key = self._defaultArg[k]
+                if s == "":
+                    s = "'%s'" % key
+                else:
+                    s = s + ",'%s'" % key
+                writeLineStr(self._file, "%s = %s," % (key, exportLua(v)))
+        writeLineStr(self._file, "__order = {%s}" % (s))
+        self.writeDict(isOver=True)
+        self.writeDict(isOver=True)
+        self.writeDict(isOver=True)
+
+        self._file.close()
+
+    def writeOver(self, csvList):
+        self._file = open(self._outpath + "csv.lua", "w", encoding='utf-8')
+        writeLineStr(self._file, "globals.csv = {}\n")
+        for v in csvList:
+            writeLineStr(self._file, 'require "config.%s"' % (v))
+        self._file.close()
+        self.clear()

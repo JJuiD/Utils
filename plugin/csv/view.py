@@ -2,23 +2,23 @@ from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
-from plugin.base import ModelProxy
+from easy.qt_extend.line_edit import LineEdit
 from view.data import gMainWindow
 
-
 class CsvView(QDockWidget):
-    def __init__(self, model: ModelProxy):
+    def __init__(self, model):
         QDockWidget.__init__(self, "csv", gMainWindow())
 
         gMainWindow().addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea,self)
 
         self.model = model
-        # self.setFixedWidth(400)
-        # self.setFixedHeight(300)
+        self.setMinimumWidth(300)
+        self.setFixedHeight(160)
 
         hBoxWidget1 = QWidget()
         hBoxWidget1.setStyleSheet('''QWidget{background-color:#66CCFF;}''')
-        self.inputLineEdit = QLineEdit(hBoxWidget1)
+        self.inputLineEdit = LineEdit(hBoxWidget1)
+        self.inputLineEdit.setReadOnly(True)
         self.inputLineEdit.setPlaceholderText("csv目录")
         self.inputBtn = QPushButton(hBoxWidget1)
         self.inputBtn.setText("...")
@@ -30,7 +30,8 @@ class CsvView(QDockWidget):
 
         hBoxWidget2 = QWidget()
         hBoxWidget2.setStyleSheet('''QWidget{background-color:#FFCCFF;}''')
-        self.exportLineEdit = QLineEdit(hBoxWidget2)
+        self.exportLineEdit = LineEdit(hBoxWidget2)
+        self.exportLineEdit.setReadOnly(True)
         self.exportLineEdit.setPlaceholderText("导出目录")
         self.exportBtn = QPushButton(hBoxWidget2)
         self.exportBtn.setText("...")
@@ -65,16 +66,12 @@ class CsvView(QDockWidget):
         # vbox = QVBoxLayout()
         # vbox.addStretch(1)
         # vbox.addWidget(hBoxWidget1)
-
         # QFileDialog.getExistingDirectory(self, "csv目录", "./")
-        # 最后，把布局放到窗口中里。
         self.setWidget(vBoxWidget)
-
         # self.setLayout(hBoxLayOut1)
         # self.setWidget(hBoxWidget1)
         # self.setFloating(False)
         # self.setStyleSheet('''QWidget{background-color:#66CCFF;}''')
-
 
     def onClickInputBtn(self):
         path = QFileDialog.getExistingDirectory(self, "csv目录", "./")
@@ -83,14 +80,11 @@ class CsvView(QDockWidget):
     def onClickExportBtn(self):
         path = QFileDialog.getExistingDirectory(self, "导出目录", "./")
         self.exportLineEdit.setText(path)
-
     def onComboBoxActivated(self, index):
-        self.model.setExportType(self.exportComboBox.currentIndex())
-
+        self.model.setExportType(index)
     def onClickSureBtn(self):
-        pass
-
+        self.model.run()
     def closeEvent(self, event: QCloseEvent):
-        self.model.setViewCreate(False)
+        print("closeEvent", self.width(), self.height())
+        self.model.closeEvent()
 
-        print("!!!!!!!!!!!!", self.width(), self.height())
