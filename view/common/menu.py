@@ -1,7 +1,7 @@
 import functools
 
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from manager.model_manager import ModelManager
 from manager.ui_manager import UIManager

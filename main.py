@@ -1,14 +1,15 @@
 import sys
 
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from easy.log import Log
 
 # from qt_material import apply_stylesheet
 from manager.model_manager import ModelManager
 from manager.ui_manager import UIManager
-from style import MainWindowStyle
+from modules.ui_functions import UIFunctions
+from modules.ui_main import Ui_MainWindow
 from view.common.main import MainWidget
 from view.common.menu import MenuBar
 # 预加载
@@ -18,22 +19,23 @@ from model.rss.base import RSS
 ModelManager.preload(CsvModel)
 ModelManager.preload(RSS)
 
-class MainWindow(QMainWindow):
+class MainWindow(Ui_MainWindow):
 	def __init__(self):
 		super(MainWindow, self).__init__()
-		self.initCentralWidget()
-		self.initMenuBar()
+		self.setupUi()
+
+		UIFunctions.uiDefinitions(self)
+		# self.initMenuBar()
 		self.initManager()
 
-		MainWindowStyle(self)
 	def initManager(self):
 		UIManager.init(self)
-	def initCentralWidget(self):
-		self.centerWidget = MainWidget(self)
-		self.setCentralWidget(self.centerWidget)
 	def initMenuBar(self):
 		menuBar = MenuBar(self)
 		self.setMenuBar(menuBar)
+	def resizeEvent(self, event):
+		# Update Size Grips
+		UIFunctions.resize_grips(self)
 	def closeEvent(self, a0: QCloseEvent):
 		Log.close()
 		UIManager.close()
