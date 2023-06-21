@@ -18,9 +18,9 @@ class Idler:
 		self._value = value
 
 
-i = Idler(111)
-i = 2
-print(i)
+# i = Idler(111)
+# i = 2
+# print(i)
 
 class IdlerList:
 	def __init__(self, value=None):
