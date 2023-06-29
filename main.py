@@ -298,6 +298,12 @@ class MainWindow(UIMainWindow):
 if __name__ == "__main__":
     app = QApplication([])
     # apply_stylesheet(app, theme='light_teal.xml')
+
+    # 使得程序能在后台运行，关闭最后一个窗口不退出程序
+    QApplication.setQuitOnLastWindowClosed(False)
+
+
+
     gui = MainWindow()
     gui.show()
     sys.exit(app.exec())
