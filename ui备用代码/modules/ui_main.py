@@ -14,16 +14,13 @@ from PySide6.QtWidgets import *
 
 from . resources_rc import *
 
-class Ui_MainWindow(QMainWindow):
-    def setupUi(self):
-        if not self.objectName():
-            self.setObjectName(u"MainWindow")
-        self.resize(1280, 720)
-        # MainWindow.setMinimumSize(QSize(940, 560))
-		# 隐藏标题栏
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.styleSheet = QWidget(self)
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        if not MainWindow.objectName():
+            MainWindow.setObjectName(u"MainWindow")
+        MainWindow.resize(1280, 720)
+        MainWindow.setMinimumSize(QSize(940, 560))
+        self.styleSheet = QWidget(MainWindow)
         self.styleSheet.setObjectName(u"styleSheet")
         font = QFont()
         font.setFamily(u"Segoe UI")
@@ -713,6 +710,8 @@ class Ui_MainWindow(QMainWindow):
         self.btn_exit.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-x.png);")
 
         self.verticalLayout_8.addWidget(self.btn_exit)
+
+
         self.verticalMenuLayout.addWidget(self.topMenu, 0, Qt.AlignTop)
 
         self.bottomMenu = QFrame(self.leftMenuFrame)
@@ -734,8 +733,14 @@ class Ui_MainWindow(QMainWindow):
         self.toggleLeftBox.setStyleSheet(u"background-image: url(:/icons/images/icons/icon_settings.png);")
 
         self.verticalLayout_9.addWidget(self.toggleLeftBox)
+
+
         self.verticalMenuLayout.addWidget(self.bottomMenu, 0, Qt.AlignBottom)
+
+
         self.verticalLayout_3.addWidget(self.leftMenuFrame)
+
+
         self.appLayout.addWidget(self.leftMenuBg)
 
         self.extraLeftBox = QFrame(self.bgApp)
@@ -789,7 +794,11 @@ class Ui_MainWindow(QMainWindow):
         self.extraCloseColumnBtn.setIconSize(QSize(20, 20))
 
         self.extraTopLayout.addWidget(self.extraCloseColumnBtn, 0, 2, 1, 1)
+
+
         self.verticalLayout_5.addLayout(self.extraTopLayout)
+
+
         self.extraColumLayout.addWidget(self.extraTopBg)
 
         self.extraContent = QFrame(self.extraLeftBox)
@@ -843,6 +852,8 @@ class Ui_MainWindow(QMainWindow):
         self.btn_more.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-layers.png);")
 
         self.verticalLayout_11.addWidget(self.btn_more)
+
+
         self.verticalLayout_12.addWidget(self.extraTopMenu, 0, Qt.AlignTop)
 
         self.extraCenter = QFrame(self.extraContent)
@@ -859,6 +870,8 @@ class Ui_MainWindow(QMainWindow):
         self.textEdit.setReadOnly(True)
 
         self.verticalLayout_10.addWidget(self.textEdit)
+
+
         self.verticalLayout_12.addWidget(self.extraCenter)
 
         self.extraBottom = QFrame(self.extraContent)
@@ -867,7 +880,11 @@ class Ui_MainWindow(QMainWindow):
         self.extraBottom.setFrameShadow(QFrame.Raised)
 
         self.verticalLayout_12.addWidget(self.extraBottom)
+
+
         self.extraColumLayout.addWidget(self.extraContent)
+
+
         self.appLayout.addWidget(self.extraLeftBox)
 
         self.contentBox = QFrame(self.bgApp)
@@ -913,6 +930,8 @@ class Ui_MainWindow(QMainWindow):
         self.titleRightInfo.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
         self.horizontalLayout_3.addWidget(self.titleRightInfo)
+
+
         self.horizontalLayout.addWidget(self.leftBox)
 
         self.rightButtons = QFrame(self.contentTopBg)
@@ -976,7 +995,11 @@ class Ui_MainWindow(QMainWindow):
         self.closeAppBtn.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.closeAppBtn)
+
+
         self.horizontalLayout.addWidget(self.rightButtons, 0, Qt.AlignRight)
+
+
         self.verticalLayout_2.addWidget(self.contentTopBg)
 
         self.contentBottom = QFrame(self.contentBox)
@@ -1051,6 +1074,8 @@ class Ui_MainWindow(QMainWindow):
         self.labelBoxBlenderInstalation.setStyleSheet(u"")
 
         self.verticalLayout_18.addWidget(self.labelBoxBlenderInstalation)
+
+
         self.verticalLayout_17.addWidget(self.frame_title_wid_1)
 
         self.frame_content_wid_1 = QFrame(self.frame_div_content_1)
@@ -1088,9 +1113,17 @@ class Ui_MainWindow(QMainWindow):
         self.labelVersion_3.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
         self.gridLayout.addWidget(self.labelVersion_3, 1, 0, 1, 2)
+
+
         self.horizontalLayout_9.addLayout(self.gridLayout)
+
+
         self.verticalLayout_17.addWidget(self.frame_content_wid_1)
+
+
         self.verticalLayout_16.addWidget(self.frame_div_content_1)
+
+
         self.verticalLayout.addWidget(self.row_1)
 
         self.row_2 = QFrame(self.widgets)
@@ -1204,7 +1237,11 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalSlider.setOrientation(Qt.Horizontal)
 
         self.gridLayout_2.addWidget(self.horizontalSlider, 2, 0, 1, 2)
+
+
         self.verticalLayout_19.addLayout(self.gridLayout_2)
+
+
         self.verticalLayout.addWidget(self.row_2)
 
         self.row_3 = QFrame(self.widgets)
@@ -1336,6 +1373,8 @@ class Ui_MainWindow(QMainWindow):
         self.tableWidget.verticalHeader().setStretchLastSection(True)
 
         self.horizontalLayout_12.addWidget(self.tableWidget)
+
+
         self.verticalLayout.addWidget(self.row_3)
 
         self.stackedWidget.addWidget(self.widgets)
@@ -1348,8 +1387,12 @@ class Ui_MainWindow(QMainWindow):
         self.label.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout_20.addWidget(self.label)
+
         self.stackedWidget.addWidget(self.new_page)
+
         self.verticalLayout_15.addWidget(self.stackedWidget)
+
+
         self.horizontalLayout_4.addWidget(self.pagesContainer)
 
         self.extraRightBox = QFrame(self.content)
@@ -1421,9 +1464,17 @@ class Ui_MainWindow(QMainWindow):
         self.btn_logout.setStyleSheet(u"background-image: url(:/icons/images/icons/cil-account-logout.png);")
 
         self.verticalLayout_14.addWidget(self.btn_logout)
+
+
         self.verticalLayout_13.addWidget(self.topMenus, 0, Qt.AlignTop)
+
+
         self.verticalLayout_7.addWidget(self.contentSettings)
+
+
         self.horizontalLayout_4.addWidget(self.extraRightBox)
+
+
         self.verticalLayout_6.addWidget(self.content)
 
         self.bottomBar = QFrame(self.contentBottom)
@@ -1462,18 +1513,31 @@ class Ui_MainWindow(QMainWindow):
         self.frame_size_grip.setFrameShadow(QFrame.Raised)
 
         self.horizontalLayout_5.addWidget(self.frame_size_grip)
+
+
         self.verticalLayout_6.addWidget(self.bottomBar)
+
+
         self.verticalLayout_2.addWidget(self.contentBottom)
+
+
         self.appLayout.addWidget(self.contentBox)
+
+
         self.appMargins.addWidget(self.bgApp)
-        self.setCentralWidget(self.styleSheet)
-        self.retranslateUi()
+
+        MainWindow.setCentralWidget(self.styleSheet)
+
+        self.retranslateUi(MainWindow)
+
         self.stackedWidget.setCurrentIndex(2)
-        QMetaObject.connectSlotsByName(self)
+
+
+        QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
-    def retranslateUi(self):
-        self.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.titleLeftApp.setText(QCoreApplication.translate("MainWindow", u"PyDracula", None))
         self.titleLeftDescription.setText(QCoreApplication.translate("MainWindow", u"Modern GUI / Flat Style", None))
         self.toggleButton.setText(QCoreApplication.translate("MainWindow", u"Hide", None))
@@ -1595,6 +1659,4 @@ class Ui_MainWindow(QMainWindow):
         self.creditsLabel.setText(QCoreApplication.translate("MainWindow", u"By: Wanderson M. Pimenta", None))
         self.version.setText(QCoreApplication.translate("MainWindow", u"v1.0.3", None))
     # retranslateUi
-
-
 
