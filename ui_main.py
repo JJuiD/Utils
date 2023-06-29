@@ -16,8 +16,8 @@ from modules.resources_rc import *
 
 class UIMainWindow(QMainWindow):
     def __init__(self):
-        if not self.objectName():
-            self.setObjectName(u"MainWindow")
+        QMainWindow.__init__(self)
+        self.setObjectName(u"MainWindow")
         self.resize(1280, 720)
         # MainWindow.setMinimumSize(QSize(940, 560))
 		# 隐藏标题栏

@@ -142,7 +142,7 @@ class UIFunctions(QMainWindow):
 	# START - GUI DEFINITIONS
 	# ///////////////////////////////////////////////////////////////
 
-	def resize_grips(self):
+	# def resize_grips(self):
 		 # if Settings.ENABLE_CUSTOM_TITLE_BAR:
 
 

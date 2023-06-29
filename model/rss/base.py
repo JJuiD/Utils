@@ -1,4 +1,4 @@
-import feedparser
+# import feedparser
 
 from model.base import Model
 
