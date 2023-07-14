@@ -1,6 +1,16 @@
-# import feedparser
+import json
+import os
+from datetime import datetime
+from threading import Thread
+from time import sleep
 
+import feedparser
+
+from easy.idler import IdlerList
+from easy.user_default import UserDefault
 from model.base import Model
+from view.rss import RSSView
+
 
 # "http://www.zhihu.com/rss"
 # NewsFeed = feedparser.parse("http://www.gcores.com/rss")
@@ -9,10 +19,102 @@ from model.base import Model
 #
 # print(entry)
 
+GMT0800_FORMAT = '%a, %d %b %Y %H:%M:%S +0800'
+
+class RSSUrl:
+	def __init__(self, key, url, seconds):
+		self._key = key
+		self._url = url
+		self._seconds = seconds
+		self._over = False
+		self._updateTimeStr = UserDefault.value("rss/" + self._key)
+		if self._updateTimeStr is None:
+			self._updateTimeStr = "Thu, 13 Jul 2023 02:16:42 +0800"
+		self._nowTimeStruct = datetime.strptime(self._updateTimeStr, GMT0800_FORMAT)
+	def setting(self):
+		UserDefault.setValue("rss/" + self._key, self._updateTimeStr)
+	def calcLerpTime(self, strptime):
+		return (strptime - self._nowTimeStruct).total_seconds()
+	def parse(self):
+		feed = feedparser.parse(self._url)
+		if feed.bozo == 0:
+			entries = []
+			published = None
+			for entry in feed.entries:
+				seconds = self.calcLerpTime(datetime.strptime(entry.published, GMT0800_FORMAT))
+				if seconds > 0:
+					entries.append({
+						"web_title": feed.feed.title,
+						"title": entry.title,
+						"link": entry.link,
+						"summary": entry.summary,
+						"summary_detail": entry.summary_detail
+					})
+					if published is None:
+						published = entry.published
+				else:
+					break
+
+			if published is not None:
+				self._updateTimeStr = published
+				self._nowTimeStruct = datetime.strptime(self._updateTimeStr, GMT0800_FORMAT)
+				self.setting()
+
+			return entries
+		return None
+
+urls = [
+	["gcores", "http://www.gcores.com/rss", 60*60*24]
+]
+
+HistoryFile = "rss_history"
+RssTimeLerp = 5
+
+def RSSGet(self):
+	while self.threadRun:
+		self.refresh()
+		sleep(RssTimeLerp)
+
 class RSS_(Model):
 	Name = "rss"
-	def __init__(self):
-		Model.__init__(self)
+	ViewClass = RSSView
+	def init(self):
+		global urls
+		self.urlGet = []
+
+		for url in urls:
+			self.urlGet.append(RSSUrl(url[0], url[1], url[2]))
+
+		urlArticles = []
+		if os.path.exists(HistoryFile):
+			with open(HistoryFile, 'r', encoding='utf-8') as file:
+				urlArticles = json.load(file)
+		self.urlArticles = IdlerList(urlArticles)
+
+		self.thread = Thread(target=RSSGet, args=[self], name="RSSGet")
+		self.threadRun = True
+		self.thread.start()
+	def refresh(self):
+		urlArticles = []
+		for p in self.urlGet:
+			info = p.parse()
+			if info is not None:
+				urlArticles.extend(info)
+
+		# 将新的提要内容写入本地文件
+		if len(urlArticles) > 0:
+			self.urlArticles.extend(urlArticles)
+			with open(HistoryFile, 'w+', encoding='utf-8') as file:
+				json.dump(self.urlArticles.json(), file, indent=4)
+			print(f"RSS提要已保存到 {HistoryFile}")
+	def exit(self):
+		self.threadRun = False
+
+		# feedList = []
+		# for url in urls:
+		# 	newsFeed = feedparser.parse(url)
+		# 	feedList.append(newsFeed)
+		# return feedList
 
 # RSS2.0 image的子元素列表
 # url     图片的url      必备

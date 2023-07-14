@@ -34,7 +34,7 @@ class Log_(Singleton):
 		self._f.flush()
 		self._stash.clear()
 		return ret
-	def close(self):
+	def exit(self):
 		for s in self._stash:
 			self._f.write(s)
 		self._f.close()

@@ -1,11 +1,11 @@
 from easy.qt_extend.line_edit import LineEdit
 from view.base import *
 
-class CsvView(QWidget, ViewBase):
-	def __init__(self, parent):
-		QWidget.__init__(self, parent)
-		ViewBase.__init__(self)
 
+class CsvView(QWidget, ViewBase):
+	EnterType = ViewEnterType.Dock
+
+	def onInit(self):
 		self.setMinimumWidth(300)
 		self.setFixedHeight(160)
 
@@ -15,9 +15,6 @@ class CsvView(QWidget, ViewBase):
 		self.exportBtn = None
 		self.exportComboBox = None
 		self.sureBtn = None
-
-	def init(self, model):
-		ViewBase.init(self, model)
 
 		hBoxWidget1 = QWidget()
 		hBoxWidget1.setStyleSheet('''QWidget{background-color:#66CCFF;}''')
@@ -66,26 +63,31 @@ class CsvView(QWidget, ViewBase):
 		vBoxLayOut.addWidget(hBoxWidget3)
 		self.setLayout(vBoxLayOut)
 
-		# vbox = QVBoxLayout()
-		# vbox.addStretch(1)
-		# vbox.addWidget(hBoxWidget1)
-		# QFileDialog.getExistingDirectory(self, "csv目录", "./")
-		# self.setLayout(hBoxLayOut1)
-		# self.setWidget(hBoxWidget1)
-		# self.setFloating(False)
-		# self.setStyleSheet('''QWidget{background-color:#66CCFF;}''')
+	# vbox = QVBoxLayout()
+	# vbox.addStretch(1)
+	# vbox.addWidget(hBoxWidget1)
+	# QFileDialog.getExistingDirectory(self, "csv目录", "./")
+	# self.setLayout(hBoxLayOut1)
+	# self.setWidget(hBoxWidget1)
+	# self.setFloating(False)
+	# self.setStyleSheet('''QWidget{background-color:#66CCFF;}''')
 	def bindIdler(self):
 		self.inputLineEdit.bindIdler(self.model().inputPath)
 		self.exportLineEdit.bindIdler(self.model().outputPath)
+
 	def onClickInputBtn(self):
 		path = QFileDialog.getExistingDirectory(self, "csv目录", "./")
 		self.inputLineEdit.setText(path)
+
 	def onClickExportBtn(self):
 		path = QFileDialog.getExistingDirectory(self, "导出目录", "./")
 		self.exportLineEdit.setText(path)
+
 	def onComboBoxActivated(self, index):
 		self.model().setExportType(index)
+
 	def onClickSureBtn(self):
 		self.model().run()
+
 	def setting(self):
 		pass

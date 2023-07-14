@@ -1,3 +1,4 @@
+import functools
 import sys
 
 from PySide6.QtGui import *
@@ -20,12 +21,11 @@ from model.rss.base import RSS
 
 from widgets import CustomGrip
 
-ModelManager.preload(CsvModel)
+# ModelManager.preload(CsvModel)
 ModelManager.preload(RSS)
 
 GLOBAL_STATE = False
 GLOBAL_TITLE_BAR = True
-
 
 MENU_SELECTED_STYLESHEET = """
     border-left: 22px solid qlineargradient(spread:pad, x1:0.034, y1:0, x2:0.216, y2:0, stop:0.499 rgba(255, 121, 198, 255), stop:0.5 rgba(85, 170, 255, 0));
@@ -45,14 +45,34 @@ def deselectMenu(getStyle):
 class MainWindow(UIMainWindow):
     def __init__(self):
         super().__init__()
-
-
         # EventMainWindow.__init__(self)
+        self.initLeftMenu()
         self.initEvent()
-
         self.initWindowTitle()
         # self.initMenuBar()
         self.initManager()
+
+    def onSetCurrentWidget(self, sender):
+        name = sender.objectName()
+        self.resetStyle(name)
+        sender.setStyleSheet(selectMenu(sender.styleSheet()))
+        UIManager.open(name)
+    def initLeftMenu(self):
+        self.leftMenuClickCall = {}
+        def addLeftMenu(name, iconPath):
+            btn = QPushButton(self.topMenu)
+            btn.setObjectName(name)
+            self.toggleButton.sizePolicy().setHeightForWidth(btn.sizePolicy().hasHeightForWidth())
+            btn.setSizePolicy(self.toggleButton.sizePolicy())
+            btn.setMinimumSize(QSize(0, 45))
+            btn.setFont(self.topMenuFont)
+            btn.setCursor(QCursor(Qt.PointingHandCursor))
+            btn.setLayoutDirection(Qt.LeftToRight)
+            btn.setStyleSheet(iconPath)
+            btn.clicked.connect(functools.partial(self.onSetCurrentWidget, btn))
+            self.topMenuVLayout.addWidget(btn)
+            return btn
+        self.btnRss = addLeftMenu(u"rss", u"background-image: url(:/icons/images/icons/cil-bell.png);")
 
     def initEvent(self):
         self.toggleButton.clicked.connect(self.onClickToggleMenu)
@@ -71,13 +91,12 @@ class MainWindow(UIMainWindow):
         self.stackedWidget.setCurrentWidget(self.home)
         self.btn_home.setStyleSheet(selectMenu(self.btn_home.styleSheet()))
         # 侧边按钮
-        self.btn_home.clicked.connect(self.buttonClick)
-        self.btn_widgets.clicked.connect(self.buttonClick)
-        self.btn_new.clicked.connect(self.buttonClick)
-        self.btn_save.clicked.connect(self.buttonClick)
+        self.btn_home.clicked.connect(self.onLeftMenuButtonClick)
+        self.btn_widgets.clicked.connect(self.onLeftMenuButtonClick)
+        self.btn_new.clicked.connect(self.onLeftMenuButtonClick)
+        self.btn_save.clicked.connect(self.onLeftMenuButtonClick)
 
-
-    def buttonClick(self):
+    def onLeftMenuButtonClick(self):
         # GET BUTTON CLICKED
         btn = self.sender()
         btnName = btn.objectName()
@@ -85,26 +104,19 @@ class MainWindow(UIMainWindow):
         # SHOW HOME PAGE
         if btnName == "btn_home":
             self.stackedWidget.setCurrentWidget(self.home)
-            self.resetStyle(btnName)
-            btn.setStyleSheet(selectMenu(btn.styleSheet()))
-
         # SHOW WIDGETS PAGE
-        if btnName == "btn_widgets":
+        elif btnName == "btn_widgets":
             self.stackedWidget.setCurrentWidget(self.widgets)
-            self.resetStyle(btnName)
-            btn.setStyleSheet(selectMenu(btn.styleSheet()))
-
         # SHOW NEW PAGE
-        if btnName == "btn_new":
+        elif btnName == "btn_new":
             self.stackedWidget.setCurrentWidget(self.new_page)  # SET PAGE
-            self.resetStyle(btnName)  # RESET ANOTHERS BUTTONS SELECTED
-            btn.setStyleSheet(selectMenu(btn.styleSheet()))  # SELECT MENU
-
-        if btnName == "btn_save":
+        elif btnName == "btn_save":
             print("Save BTN clicked!")
 
         # PRINT BTN NAME
         print(f'Button "{btnName}" pressed!')
+        self.resetStyle(btnName)  # RESET ANOTHERS BUTTONS SELECTED
+        btn.setStyleSheet(selectMenu(btn.styleSheet()))  # SELECT MENU
 
     def openCloseLeftBox(self, enable):
         # GET WIDTH
@@ -277,8 +289,7 @@ class MainWindow(UIMainWindow):
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-    def initManager(self):
-        UIManager.init(self)
+
     def initMenuBar(self):
         menuBar = MenuBar(self)
         self.setMenuBar(menuBar)
@@ -288,10 +299,13 @@ class MainWindow(UIMainWindow):
         self.rightGrip.setGeometry(self.width() - 10, 10, 10, self.height())
         self.topGrip.setGeometry(0, 0, self.width(), 10)
         self.bottomGrip.setGeometry(0, self.height() - 10, self.width(), 10)
-
+    def initManager(self):
+        UIManager.init(self)
+        ModelManager.init()
     def closeEvent(self, a0: QCloseEvent):
-        Log.close()
-        UIManager.close()
+        Log.exit()
+        UIManager.exit()
+        ModelManager.exit()
         a0.accept()
 
 
@@ -301,8 +315,6 @@ if __name__ == "__main__":
 
     # 使得程序能在后台运行，关闭最后一个窗口不退出程序
     QApplication.setQuitOnLastWindowClosed(False)
-
-
 
     gui = MainWindow()
     gui.show()

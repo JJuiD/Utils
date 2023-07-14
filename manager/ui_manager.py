@@ -5,7 +5,9 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 
 from easy.singleton import Singleton
+from easy.user_default import UserDefault
 from manager.model_manager import ModelManager
+from view.base import ViewEnterType
 
 
 class DockWidget(QDockWidget):
@@ -17,79 +19,125 @@ class DockWidget(QDockWidget):
 		self.dockLocationChanged.connect(self.onDockLocationChanged)
 	def init(self, model):
 		self._model = model
-		viewClass = model.ViewClass
-		self._view = viewClass(self)
-		self._view.init(model)
+		ViewClass = model.ViewClass
+		self._view = ViewClass(self)
+		self._view.dataModel(model)
+		self._view.init()
 		self._view.bindIdler()
 
 		self.setWidget(self._view)
 		self.setObjectName(model.Name)
-		# 预加载
 		if self.settingValue("state"):
 			self._area = self.settingValue("area")
+	def open(self):
 		self.parent().addDockWidget(self._area, self)
 	def onDockLocationChanged(self, area):
 		self._area = area
 	def settingValue(self, key):
-		return UIManager.setting().value(self.name() + "/" + key)
+		return UserDefault.value(self.name() + "/" + key)
 	def closeEvent(self, event):
-		self._model.onClose()
+		self._model.exit()
 		# 删除缓存
-		UIManager.setting().remove(self.name())
-		UIManager.destoryView(self)
+		UserDefault.remove(self.name())
+		UIManager.close(self)
 		event.accept()
 	def name(self):
 		return self._model.Name
-	def setting(self):
-		self._model.setting()
-		UIManager.setting().beginGroup(self.name())
-		UIManager.setting().setValue("area", self._area)
-		UIManager.setting().setValue("state", True)
-		self._view.setting()
-		UIManager.setting().endGroup()
+	def exit(self):
+		self._model.exit()
+		UserDefault.beginGroup(self.name())
+		UserDefault.setValue("area", self._area)
+		UserDefault.setValue("state", True)
+		UserDefault.endGroup()
+class PageWidget():
+	def __init__(self, parent):
+		self._view = None
+		self._model = None
+		self._parent = parent
+	def init(self, model):
+		self._model = model
+		ViewClass = model.ViewClass
+		self._view = ViewClass(self._parent)
+		self._view.dataModel(model)
+		self._view.init()
+		self._view.bindIdler()
+
+		self._view.setObjectName(model.Name)
+		# 预加载
+		if self.settingValue("state"):
+			pass
+		self._parent.stackedWidget.addWidget(self._view)
+	# self._area = self.settingValue("area")
+	def open(self):
+		self._parent.stackedWidget.setCurrentWidget(self._view)
+	def settingValue(self, key):
+		return UserDefault.value(self.name() + "/" + key)
+	def closeEvent(self, event):
+		self._model.onClose()
+		# 删除缓存
+		UserDefault.remove(self.name())
+		UIManager.close(self)
+		event.accept()
+	def name(self):
+		return self._model.Name
+	def exit(self):
+		self._model.exit()
+		UserDefault.beginGroup(self.name())
+		UserDefault.setValue("state", True)
+		UserDefault.endGroup()
+
+
+def setBackGroundStyle(widget):
+	widget.setStyleSheet("""
+QWidget {
+	background-color: rgb(27, 29, 35);
+	border-radius: 5px;
+	padding: 10px;
+}
+QWidget:hover {
+	border: 2px solid rgb(64, 71, 88);
+}
+QWidget:focus {
+	border: 2px solid rgb(91, 101, 124);
+}
+""")
+
+
 
 class UIManager_(Singleton):
 	def __init__(self):
 		self._root = None
 		self._childs = {}
-		self._setting = QSettings('ui.ini', QSettings.Format.IniFormat)
-
-		# print("!!!!!!!!!!!!!!!")
-		# self._setting.beginGroup("test")
-		# self._setting.setValue("key", 111)
-		# self._setting.endGroup()
-		# print(self._setting.value("test"))
-		# print(self._setting.value("test/key"))
-		# self._setting.remove("test")
-		# print(self._setting.value("test/key"))
-		# print("-----------------end")
-
+	def root(self):
+		return self._root
 	def init(self, mainWindow):
 		self._root = mainWindow
-		for model in ModelManager.models():
-			stateKey = model.Name + "/state"
-			if self._setting.value(stateKey):
-				self.createView(model)
-		self._root.restoreGeometry(self._setting.value("window_geometry"))
-		self._root.restoreState(self._setting.value("window_state"))
-
-	def createView(self, model):
-		if self._childs.get(model.Name) is not None:
-			widget = self._childs.get(model.Name)
-		else:
-			widget = DockWidget(self._root)
-			widget.init(model)
-			# self._root.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, widget)
-			self._childs[model.Name] = widget
-		return widget
-	def destoryView(self, widget):
-		del self._childs[widget.name()]
-	def setting(self):
-		return self._setting
-	def close(self):
-		self._setting.setValue("window_geometry", self._root.saveGeometry())
-		self._setting.setValue("window_state", self._root.saveState())
+		# for model in ModelManager.models():
+		# 	stateKey = model.Name + "/state"
+		# 	if UserDefault.value(stateKey):
+		# 		self.openView(model)
+		self._root.restoreGeometry(UserDefault.value("window_geometry"))
+		self._root.restoreState(UserDefault.value("window_state"))
+	def exit(self):
+		UserDefault.setValue("window_geometry", self._root.saveGeometry())
+		UserDefault.setValue("window_state", self._root.saveState())
 		for name, child in self._childs.items():
-			child.setting()
+			child.exit()
+	def open(self, name):
+		model = ModelManager.at(name)
+		if self._childs.get(name) is None:
+			widget = None
+			if model.ViewClass.EnterType == ViewEnterType.Dock:
+				widget = DockWidget(self._root)
+			elif model.ViewClass.EnterType == ViewEnterType.Page:
+				widget = PageWidget(self._root)
+			widget.init(model)
+			self._childs[model.Name] = widget
+		widget = self._childs.get(model.Name)
+		widget.open()
+		return widget
+	def close(self, widget):
+		del self._childs[widget.name()]
+
 
 UIManager = UIManager_()

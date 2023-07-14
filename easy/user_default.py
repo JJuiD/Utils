@@ -28,6 +28,10 @@ class UserDefault_(Singleton):
 	def getForeverLocalKey(self, key, default=None):
 		value = self._cache.get(key)
 		if value == None:
+			element = self._findOrNew(key)
+			if element != None:
+				return self._parseValue(key, element.text, isRead=True)
+			value = default
 			self._setElementText(key, default)
 		return value
 	def setForeverLocalKey(self, key, value):
@@ -110,9 +114,7 @@ class UserDefault_(Singleton):
 			self._root.append(element)
 		return element
 
+# UserDefault = UserDefault_()
 
-
-UserDefault = UserDefault_()
-
-
+UserDefault = QSettings('UserDefault.ini', QSettings.Format.IniFormat)
 

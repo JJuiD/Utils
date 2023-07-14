@@ -9,13 +9,16 @@ from easy.singleton import Singleton
 class Model(Singleton):
 	Name = ""
 	ViewClass = None
+
 	def __init__(self):
 		Singleton.__init__(self)
-		self._view = None
 	# def show(self):
 	# 	UIManager.createView(Qt.DockWidgetArea.NoDockWidgetArea, self.createView())
+	def init(self):
+		pass
+	def close(self):
+		self.onClose()
 	def onClose(self):
-		self._view = None
-	# 数据保存
-	def setting(self):
+		pass
+	def exit(self):
 		pass
