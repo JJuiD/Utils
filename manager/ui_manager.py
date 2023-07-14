@@ -33,8 +33,10 @@ class DockWidget(QDockWidget):
 		self.parent().addDockWidget(self._area, self)
 	def onDockLocationChanged(self, area):
 		self._area = area
-	def settingValue(self, key):
-		return UserDefault.value(self.name() + "/" + key)
+	def settingValue(self, key, value=None):
+		if value == None:
+			return UserDefault.value(self.name() + "/" + key)
+		UserDefault.setValue(self.name() + "/" + key, value)
 	def closeEvent(self, event):
 		self._model.exit()
 		# 删除缓存
@@ -45,10 +47,9 @@ class DockWidget(QDockWidget):
 		return self._model.Name
 	def exit(self):
 		self._model.exit()
-		UserDefault.beginGroup(self.name())
-		UserDefault.setValue("area", self._area)
-		UserDefault.setValue("state", True)
-		UserDefault.endGroup()
+		self.settingValue("area", self._area)
+		self.settingValue("state", True)
+
 class PageWidget():
 	def __init__(self, parent):
 		self._view = None
@@ -70,8 +71,10 @@ class PageWidget():
 	# self._area = self.settingValue("area")
 	def open(self):
 		self._parent.stackedWidget.setCurrentWidget(self._view)
-	def settingValue(self, key):
-		return UserDefault.value(self.name() + "/" + key)
+	def settingValue(self, key, value=None):
+		if value == None:
+			return UserDefault.value(self.name() + "/" + key)
+		UserDefault.setValue(self.name() + "/" + key, value)
 	def closeEvent(self, event):
 		self._model.onClose()
 		# 删除缓存
@@ -82,9 +85,7 @@ class PageWidget():
 		return self._model.Name
 	def exit(self):
 		self._model.exit()
-		UserDefault.beginGroup(self.name())
-		UserDefault.setValue("state", True)
-		UserDefault.endGroup()
+		self.settingValue("state", True)
 
 
 def setBackGroundStyle(widget):
@@ -102,8 +103,6 @@ QWidget:focus {
 }
 """)
 
-
-
 class UIManager_(Singleton):
 	def __init__(self):
 		self._root = None
@@ -118,11 +117,6 @@ class UIManager_(Singleton):
 		# 		self.openView(model)
 		self._root.restoreGeometry(UserDefault.value("window_geometry"))
 		self._root.restoreState(UserDefault.value("window_state"))
-	def exit(self):
-		UserDefault.setValue("window_geometry", self._root.saveGeometry())
-		UserDefault.setValue("window_state", self._root.saveState())
-		for name, child in self._childs.items():
-			child.exit()
 	def open(self, name):
 		model = ModelManager.at(name)
 		if self._childs.get(name) is None:
@@ -138,6 +132,10 @@ class UIManager_(Singleton):
 		return widget
 	def close(self, widget):
 		del self._childs[widget.name()]
-
+	def exit(self):
+		UserDefault.setValue("window_geometry", self._root.saveGeometry())
+		UserDefault.setValue("window_state", self._root.saveState())
+		for name, child in self._childs.items():
+			child.exit()
 
 UIManager = UIManager_()
