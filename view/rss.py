@@ -4,26 +4,41 @@ from manager.ui_manager import setBackGroundStyle
 from view.base import *
 
 class RSSItem(QWidget):
-	def __init__(self, data):
+	def __init__(self, data, item: QListWidgetItem):
 		QWidget.__init__(self)
 
-		self.layout = QHBoxLayout()
+		self.layout = QVBoxLayout()
+		self.item = item
 
 		self.title = QLabel(data["title"])
 		font = self.title.font()
 		font.setBold(True)
 		font.setPixelSize(22)
 		self.title.setFont(font)
+		self.minHeight = 100
+
+		self.browser = QTextBrowser()
+		self.browser.setHtml(data["summary"])
 
 		setBackGroundStyle(self)
-
 		self.layout.addWidget(self.title)
+		self.layout.addWidget(self.browser)
+
 		self.setLayout(self.layout)
+		self.hidewSummary()
+
+	def showSummary(self):
+		self.browser.setVisible(True)
+		self.item.setSizeHint(QSize(self.item.listWidget().width(), self.item.listWidget().height()-self.minHeight-20))
+	def hidewSummary(self):
+		self.browser.setVisible(False)
+		self.item.setSizeHint(QSize(self.item.listWidget().width(), self.minHeight))
 
 class RSSView(QListWidget, ViewBase):
 	EnterType = ViewEnterType.Page
 	def init(self):
-		pass
+		# 连接双击事件的处理函数
+		self.itemDoubleClicked.connect(self.onItemDoubleClicked)
 		# self.setSpacing(20)
 		# QApplication.instance().setQuitOnLastWindowClosed(True)
 		# 隐藏任务栏,无边框,置顶等
@@ -51,15 +66,25 @@ class RSSView(QListWidget, ViewBase):
 
 	def info(self, data):
 		item = QListWidgetItem()  # 创建QListWidgetItem对象
-		item.setSizeHint(QSize(self.width(), 100))  # 设置QListWidgetItem大小
-		widget = RSSItem(data)  # 调用上面的函数获取对应
 		self.addItem(item)  # 添加item
+		widget = RSSItem(data, item)  # 调用上面的函数获取对应
 		self.setItemWidget(item, widget)  # 为item设置widget
 		# item.setText("11111111111111")
 		# w = RSSItem(data, self)
 		# print("!!!!!!!!!!!!!!!", w.height())
 		# w.setSizeIncrement(item.sizeHint().width(), w.height()+2)
 		# self.setItemWidget(item, w)
+	def onItemDoubleClicked(self, item):
+		widget = self.itemWidget(item)
+
+		for index in range(self.count()):
+			currentItem = self.item(index)
+			itemWidget = self.itemWidget(currentItem)
+			if itemWidget == widget:
+				itemWidget.showSummary()
+			else:
+				itemWidget.hidewSummary()
+
 	def removeItem(self, item):
 		# 删除item
 		w = self.itemWidget(item)
