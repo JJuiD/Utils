@@ -48,6 +48,14 @@ class IdlerList:
 	def extend(self, l):
 		for item in l:
 			self.append(item)
+	def extendFront(self, l: list):
+		for item in l[::-1]:
+			self.appendFront(item)
+	def appendFront(self, item):
+		self._value.insert(0, item)
+		if self._listeners.get(IdlerListEvent.Add):
+			for f in self._listeners.get(IdlerListEvent.Add):
+				f(item)
 	def append(self, item):
 		self._value.append(item)
 		if self._listeners.get(IdlerListEvent.Add):

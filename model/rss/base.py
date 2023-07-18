@@ -103,7 +103,7 @@ class RSS_(Model):
 
 		# 将新的提要内容写入本地文件
 		if len(urlArticles) > 0:
-			self.urlArticles.extend(urlArticles)
+			self.urlArticles.extendFront(urlArticles)
 			with open(HistoryFile, 'w+', encoding='utf-8') as file:
 				json.dump(self.urlArticles.json(), file, indent=4)
 			print(f"RSS提要已保存到 {HistoryFile}")

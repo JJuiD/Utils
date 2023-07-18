@@ -103,6 +103,27 @@ QWidget:focus {
 }
 """)
 
+def setPushButtonStyle(widget: QPushButton, icon):
+	widget.setStyleSheet("""
+QPushButton {
+	background-image: url();
+	background-position: left center;
+	background-repeat: no-repeat;
+	border: none;
+	border-left: 22px solid transparent;
+	background-color: transparent;
+	text-align: left;
+	padding-left: 44px;
+}
+QPushButton:hover {
+	background-color: rgb(40, 44, 52);
+}
+QPushButton:pressed {
+	background-color: rgb(189, 147, 249);
+	color: rgb(255, 255, 255);
+}
+""")
+
 class UIManager_(Singleton):
 	def __init__(self):
 		self._root = None

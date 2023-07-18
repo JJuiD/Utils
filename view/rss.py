@@ -1,38 +1,72 @@
 from easy.idler import bindIdlerListWhen, IdlerListEvent
 from manager.model_manager import ModelManager
-from manager.ui_manager import setBackGroundStyle
+from manager.ui_manager import *
 from view.base import *
 
 class RSSItem(QWidget):
 	def __init__(self, data, item: QListWidgetItem):
 		QWidget.__init__(self)
 
-		self.layout = QVBoxLayout()
-		self.item = item
+		layout = QVBoxLayout()
 
-		self.title = QLabel(data["title"])
-		font = self.title.font()
+
+		self._item = item
+		self._minHeight = 100
+		self._minWidth = item.listWidget().width()
+		self._isSetSummary = False
+		self._data = data
+
+		layoutMain = QHBoxLayout()
+		widget = QWidget()
+		self._title = QLabel(data["title"])
+		font = self._title.font()
 		font.setBold(True)
 		font.setPixelSize(22)
-		self.title.setFont(font)
-		self.minHeight = 100
+		self._title.setFont(font)
 
-		self.browser = QTextBrowser()
-		self.browser.setHtml(data["summary"])
+		self._linkBtn = QPushButton()
+		# sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		# sizePolicy.setHorizontalStretch(0)
+		# sizePolicy.setVerticalStretch(0)
+		# sizePolicy.setHeightForWidth(self._linkBtn.sizePolicy().hasHeightForWidth())
+		# self._linkBtn.setSizePolicy(sizePolicy)
+		self._linkBtn.setFixedSize(QSize(20, 20))
+		# self._linkBtn.setCursor(QCursor(Qt.PointingHandCursor))
+		# self._linkBtn.setLayoutDirection(Qt.LeftToRight)
+		# font = QFont()
+		# font.setFamily(u"Segoe UI")
+		# font.setPointSize(10)
+		# font.setBold(False)
+		# font.setItalic(False)
+		# self._linkBtn.setFont(font)
+		setPushButtonStyle(self._linkBtn, ":/icons/images/icons/cil-link.png")
+
+		widget.setLayout(layoutMain)
+		layoutMain.addWidget(self._title)
+		layoutMain.addWidget(self._linkBtn)
+
+		self._browser = QTextBrowser()
 
 		setBackGroundStyle(self)
-		self.layout.addWidget(self.title)
-		self.layout.addWidget(self.browser)
+		layout.addWidget(widget)
+		layout.addWidget(self._browser)
 
-		self.setLayout(self.layout)
+		self.setLayout(layout)
 		self.hidewSummary()
-
+	def updateSummary(self):
+		if self._browser.isVisible():
+			self.hidewSummary()
+		else:
+			self.showSummary()
 	def showSummary(self):
-		self.browser.setVisible(True)
-		self.item.setSizeHint(QSize(self.item.listWidget().width(), self.item.listWidget().height()-self.minHeight-20))
+		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._item.listWidget().height() - self._minHeight))
+		if self._isSetSummary is False:
+			self._browser.setHtml(self._data["summary"])
+		self._browser.setVisible(True)
+		self._browser.show()
 	def hidewSummary(self):
-		self.browser.setVisible(False)
-		self.item.setSizeHint(QSize(self.item.listWidget().width(), self.minHeight))
+		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._minHeight))
+		self._browser.setVisible(False)
 
 class RSSView(QListWidget, ViewBase):
 	EnterType = ViewEnterType.Page
@@ -81,7 +115,7 @@ class RSSView(QListWidget, ViewBase):
 			currentItem = self.item(index)
 			itemWidget = self.itemWidget(currentItem)
 			if itemWidget == widget:
-				itemWidget.showSummary()
+				itemWidget.updateSummary()
 			else:
 				itemWidget.hidewSummary()
 
