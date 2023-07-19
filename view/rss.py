@@ -1,5 +1,5 @@
 from easy.idler import bindIdlerListWhen, IdlerListEvent
-from easy.qt_extend.help import UIHelp
+from easy.qt_extend.help import *
 from easy.qt_extend.text_browser import TextBrowser
 from manager.model_manager import ModelManager
 from manager.ui_manager import *
@@ -13,26 +13,45 @@ class RSSItem(QWidget):
 
 		self._item = item
 		self._minHeight = 100
-		self._minWidth = item.listWidget().width()
 		self._isSetSummary = False
 		self._data = data
 		self._linkUrl = QUrl(data["link"])
 
 		layoutMain = QHBoxLayout()
 		widget = QWidget()
-		self._title = QLabel(data["title"])
-		font = self._title.font()
+		# self._title = QLabel(data["title"])
+		# font = self._title.font()
+		# font.setBold(True)
+		# font.setPixelSize(22)
+		# self._title.setFont(font)
+
+		self._titleCheckBox = QCheckBox(data["title"])
+		font = self._titleCheckBox.font()
 		font.setBold(True)
 		font.setPixelSize(22)
-		self._title.setFont(font)
+		self._titleCheckBox.setFont(font)
+		self._titleCheckBox.setEnabled(False)
+		self._titleCheckBox.setStyleSheet("""
+				QCheckBox::indicator:checked {
+					background-image: url(:/icons/images/icons/cil-check-alt.png);
+				}
+				""")
+		if self._data["isRead"] is True:
+			self._titleCheckBox.setCheckState(Qt.Checked)
 
 		self._linkBtn = QPushButton()
 		self._linkBtn.clicked.connect(self.onClickLinkButton)
 		UIHelp.setPushButtonStyle(self._linkBtn, ":/icons/images/icons/cil-link.png")
 
+		self._deleteBtn = QPushButton()
+		self._deleteBtn.clicked.connect(self.onClickDeleteButton)
+		UIHelp.setPushButtonStyle(self._deleteBtn, ":/icons/images/icons/cil-cut.png")
+
 		widget.setLayout(layoutMain)
-		layoutMain.addWidget(self._title)
+		layoutMain.addWidget(self._titleCheckBox)
+		# layoutMain.addWidget(self._title)
 		layoutMain.addWidget(self._linkBtn)
+		layoutMain.addWidget(self._deleteBtn)
 
 		self._browser = TextBrowser()
 		self._browser.setOpenExternalLinks(True)
@@ -47,6 +66,9 @@ class RSSItem(QWidget):
 	def onClickLinkButton(self):
 		QDesktopServices.openUrl(self._linkUrl)
 
+	def onClickDeleteButton(self):
+		self._item.listWidget().takeItem(self._item)
+
 	def updateSummary(self):
 		if self._browser.isVisible():
 			self.hidewSummary()
@@ -54,10 +76,14 @@ class RSSItem(QWidget):
 			self.showSummary()
 
 	def showSummary(self):
-		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._item.listWidget().height() - self._minHeight))
+		listWidget = self._item.listWidget()
+		self._item.setSizeHint(QSize(listWidget.width(), listWidget.height() - self._minHeight))
 		if self._isSetSummary is False:
 			self._browser.initSummary(self._data["summary"])
 			self._isSetSummary = True
+		if self._data["isRead"] is False:
+			self._titleCheckBox.setCheckState(Qt.Checked)
+			self._data["isRead"] = True
 		self._browser.setVisible(True)
 
 	def hidewSummary(self):

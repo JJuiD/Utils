@@ -5,6 +5,7 @@ from easy.singleton import Singleton
 
 ICON_SIZE = QSize(20, 20)
 
+
 class UIHelp:
 	# 隐藏滑动条
 	@staticmethod
@@ -38,19 +39,38 @@ QListWidget::item:selected { border: none; }
 	def setPushButtonStyle(widget: QPushButton, icon):
 		widget.setFixedSize(ICON_SIZE)
 		widget.setStyleSheet("""
-QPushButton {
-	background-image: url(%s);
-	background-repeat: no-repeat;
-	background-position: center;
-	border: none;
-	background-color: transparent;
-}
-QPushButton:hover {
-	background-color: rgb(40, 44, 52);
-}
-QPushButton:pressed {
-	background-color: rgb(189, 147, 249);
-	color: rgb(255, 255, 255);
-}
-""" % (icon))
+		QPushButton {
+			background-image: url(%s);
+			background-repeat: no-repeat;
+			background-position: center;
+			border: none;
+			background-color: transparent;
+		}
+		QPushButton:hover {
+			background-color: rgb(40, 44, 52);
+		}
+		QPushButton:pressed {
+			background-color: rgb(189, 147, 249);
+			color: rgb(255, 255, 255);
+		}
+		""" % (icon))
 
+	@staticmethod
+	def setCheckBoxStyle(widget: QCheckBox):
+		widget.setStyleSheet("""
+QCheckBox::indicator {
+    border: 3px solid rgb(52, 59, 72);
+	width: 15px;
+	height: 15px;
+	border-radius: 10px;
+    background: rgb(44, 49, 60);
+}
+QCheckBox::indicator:hover {
+    border: 3px solid rgb(58, 66, 81);
+}
+QCheckBox::indicator:checked {
+    background: 3px solid rgb(52, 59, 72);
+	border: 3px solid rgb(52, 59, 72);	
+	background-image: url(:/icons/images/icons/cil-check-alt.png);
+}
+""")

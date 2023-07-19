@@ -21,6 +21,7 @@ from view.rss import RSSView
 
 GMT0800_FORMAT = '%a, %d %b %Y %H:%M:%S +0800'
 UPDATE_TIME = "Thu, 13 Jul 2023 02:16:42 +0800"
+IDCounter = 1
 
 class RSSUrl:
 	def __init__(self, key, url, seconds):
@@ -37,6 +38,7 @@ class RSSUrl:
 	def calcLerpTime(self, strptime):
 		return (strptime - self._nowTimeStruct).total_seconds()
 	def parse(self):
+		global IDCounter
 		feed = feedparser.parse(self._url)
 		if feed.bozo == 0:
 			entries = []
@@ -45,12 +47,15 @@ class RSSUrl:
 				seconds = self.calcLerpTime(datetime.strptime(entry.published, GMT0800_FORMAT))
 				if seconds > 0:
 					entries.append({
+						"id": IDCounter,
 						"web_title": feed.feed.title,
 						"title": entry.title,
 						"link": entry.link,
 						"summary": entry.summary,
 						"published": entry.published,
+						"isRead": False
 					})
+					IDCounter = IDCounter + 1
 					if published is None:
 						published = entry.published
 				else:
@@ -86,8 +91,9 @@ class RSS_(Model):
 	Name = "rss"
 	ViewClass = RSSView
 	def init(self):
-		global urls
+		global urls, IDCounter
 		self.urlGet = []
+		IDCounter = int(UserDefault.value("rss/count", 1))
 
 		for url in urls:
 			self.urlGet.append(RSSUrl(url[0], url[1], url[2]))
@@ -117,12 +123,13 @@ class RSS_(Model):
 		if len(articles) > 0:
 			self.urlArticles.extend(articles)
 			self.urlArticles.sort()
-			with open(HistoryFile, 'w+', encoding='utf-8') as file:
-				json.dump(self.urlArticles.json(), file, indent=4)
-				UserDefault.setValue("rss/updatetime", datetime.now().strftime(GMT0800_FORMAT))
 			print(f"RSS提要已保存到 {HistoryFile}, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
 	def exit(self):
 		self.threadRun = False
+		with open(HistoryFile, 'w+', encoding='utf-8') as file:
+			json.dump(self.urlArticles.json(), file, indent=4)
+			UserDefault.setValue("rss/updatetime", datetime.now().strftime(GMT0800_FORMAT))
+			UserDefault.setValue("rss/count", IDCounter)
 
 		# feedList = []
 		# for url in urls:
