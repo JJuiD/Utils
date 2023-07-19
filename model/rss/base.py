@@ -20,6 +20,7 @@ from view.rss import RSSView
 # print(entry)
 
 GMT0800_FORMAT = '%a, %d %b %Y %H:%M:%S +0800'
+UPDATE_TIME = "Thu, 13 Jul 2023 02:16:42 +0800"
 
 class RSSUrl:
 	def __init__(self, key, url, seconds):
@@ -27,12 +28,12 @@ class RSSUrl:
 		self._url = url
 		self._seconds = seconds
 		self._over = False
-		self._updateTimeStr = UserDefault.value("rss/" + self._key)
+		self._updateTimeStr = UserDefault.value("rss/updatetime")
 		if self._updateTimeStr is None:
-			self._updateTimeStr = "Thu, 13 Jul 2023 02:16:42 +0800"
+			self._updateTimeStr = UPDATE_TIME
 		self._nowTimeStruct = datetime.strptime(self._updateTimeStr, GMT0800_FORMAT)
-	def setting(self):
-		UserDefault.setValue("rss/" + self._key, self._updateTimeStr)
+	# def setting(self):
+	# 	UserDefault.setValue("rss/" + self._key, self._updateTimeStr)
 	def calcLerpTime(self, strptime):
 		return (strptime - self._nowTimeStruct).total_seconds()
 	def parse(self):
@@ -48,7 +49,7 @@ class RSSUrl:
 						"title": entry.title,
 						"link": entry.link,
 						"summary": entry.summary,
-						"summary_detail": entry.summary_detail
+						"published": entry.published,
 					})
 					if published is None:
 						published = entry.published
@@ -58,8 +59,7 @@ class RSSUrl:
 			if published is not None:
 				self._updateTimeStr = published
 				self._nowTimeStruct = datetime.strptime(self._updateTimeStr, GMT0800_FORMAT)
-				self.setting()
-
+				# self.setting()
 			return entries
 		return None
 
@@ -75,6 +75,13 @@ def RSSGet(self):
 		self.refresh()
 		sleep(RssTimeLerp)
 
+def rssSort(item):
+	dateStr = item["published"]
+	date = datetime.strptime(dateStr, GMT0800_FORMAT)
+	return -date.timestamp()
+	# return  (date, item["id"]) 相同使用id进行排序
+	# return (-date.timestamp(), item["id"]) 降序
+
 class RSS_(Model):
 	Name = "rss"
 	ViewClass = RSSView
@@ -89,24 +96,31 @@ class RSS_(Model):
 		if os.path.exists(HistoryFile):
 			with open(HistoryFile, 'r', encoding='utf-8') as file:
 				urlArticles = json.load(file)
-		self.urlArticles = IdlerList(urlArticles)
+		self.urlArticles = IdlerList(urlArticles, sort=rssSort)
 
 		self.thread = Thread(target=RSSGet, args=[self], name="RSSGet")
 		self.threadRun = True
 		self.thread.start()
 	def refresh(self):
-		urlArticles = []
+		articles = []
 		for p in self.urlGet:
-			info = p.parse()
+			info = None
+			try:
+				info = p.parse()
+			except Exception as e:
+				print("rss get parse error ", str(e))
+
 			if info is not None:
-				urlArticles.extend(info)
+				articles.extend(info)
 
 		# 将新的提要内容写入本地文件
-		if len(urlArticles) > 0:
-			self.urlArticles.extendFront(urlArticles)
+		if len(articles) > 0:
+			self.urlArticles.extend(articles)
+			self.urlArticles.sort()
 			with open(HistoryFile, 'w+', encoding='utf-8') as file:
 				json.dump(self.urlArticles.json(), file, indent=4)
-			print(f"RSS提要已保存到 {HistoryFile}")
+				UserDefault.setValue("rss/updatetime", datetime.now().strftime(GMT0800_FORMAT))
+			print(f"RSS提要已保存到 {HistoryFile}, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
 	def exit(self):
 		self.threadRun = False
 

@@ -1,4 +1,5 @@
 from easy.idler import bindIdlerListWhen, IdlerListEvent
+from easy.qt_extend.text_browser import TextBrowser
 from manager.model_manager import ModelManager
 from manager.ui_manager import *
 from view.base import *
@@ -9,12 +10,12 @@ class RSSItem(QWidget):
 
 		layout = QVBoxLayout()
 
-
 		self._item = item
 		self._minHeight = 100
 		self._minWidth = item.listWidget().width()
 		self._isSetSummary = False
 		self._data = data
+		self._linkUrl = QUrl(data["link"])
 
 		layoutMain = QHBoxLayout()
 		widget = QWidget()
@@ -25,27 +26,16 @@ class RSSItem(QWidget):
 		self._title.setFont(font)
 
 		self._linkBtn = QPushButton()
-		# sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-		# sizePolicy.setHorizontalStretch(0)
-		# sizePolicy.setVerticalStretch(0)
-		# sizePolicy.setHeightForWidth(self._linkBtn.sizePolicy().hasHeightForWidth())
-		# self._linkBtn.setSizePolicy(sizePolicy)
 		self._linkBtn.setFixedSize(QSize(20, 20))
-		# self._linkBtn.setCursor(QCursor(Qt.PointingHandCursor))
-		# self._linkBtn.setLayoutDirection(Qt.LeftToRight)
-		# font = QFont()
-		# font.setFamily(u"Segoe UI")
-		# font.setPointSize(10)
-		# font.setBold(False)
-		# font.setItalic(False)
-		# self._linkBtn.setFont(font)
+		self._linkBtn.clicked.connect(self.onClickLinkButton)
 		setPushButtonStyle(self._linkBtn, ":/icons/images/icons/cil-link.png")
 
 		widget.setLayout(layoutMain)
 		layoutMain.addWidget(self._title)
 		layoutMain.addWidget(self._linkBtn)
 
-		self._browser = QTextBrowser()
+		self._browser = TextBrowser()
+		self._browser.setOpenExternalLinks(True)
 
 		setBackGroundStyle(self)
 		layout.addWidget(widget)
@@ -53,6 +43,8 @@ class RSSItem(QWidget):
 
 		self.setLayout(layout)
 		self.hidewSummary()
+	def onClickLinkButton(self):
+		QDesktopServices.openUrl(self._linkUrl)
 	def updateSummary(self):
 		if self._browser.isVisible():
 			self.hidewSummary()
@@ -61,9 +53,9 @@ class RSSItem(QWidget):
 	def showSummary(self):
 		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._item.listWidget().height() - self._minHeight))
 		if self._isSetSummary is False:
-			self._browser.setHtml(self._data["summary"])
+			self._browser.initSummary(self._data["summary"])
+			self._isSetSummary = True
 		self._browser.setVisible(True)
-		self._browser.show()
 	def hidewSummary(self):
 		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._minHeight))
 		self._browser.setVisible(False)

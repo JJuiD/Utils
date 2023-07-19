@@ -29,10 +29,11 @@ class IdlerListEvent(Enum):
 # print(i)
 
 class IdlerList:
-	def __init__(self, value:list=None):
+	def __init__(self, value:list=None, sort=None):
 		self._value = value
 		self._listeners = {}
 		self._k = 0
+		self._sort = sort
 	def __iter__(self):
 		self._k = 0
 		return self
@@ -61,6 +62,11 @@ class IdlerList:
 		if self._listeners.get(IdlerListEvent.Add):
 			for f in self._listeners.get(IdlerListEvent.Add):
 				f(item)
+
+	def sort(self, key=None):
+		if key == None:
+			return self._value.sort(key=self._sort)
+		return self._value.sort(key=key)
 	def addListeners(self, key, f):
 		if self._listeners.get(key) is None:
 			self._listeners[key] = []
