@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextDocument
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTextBrowser
@@ -10,6 +11,9 @@ class TextBrowser(QTextBrowser):
 		self._network.finished.connect(self.onHandleNetworkReply)
 		self._text = None
 		self._count = 0
+
+		self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 	def initSummary(self, text):
 		# QTextBrowser.setHtml(self, text)
 		self._text = text

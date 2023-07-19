@@ -1,4 +1,5 @@
 from easy.idler import bindIdlerListWhen, IdlerListEvent
+from easy.qt_extend.help import UIHelp
 from easy.qt_extend.text_browser import TextBrowser
 from manager.model_manager import ModelManager
 from manager.ui_manager import *
@@ -26,9 +27,8 @@ class RSSItem(QWidget):
 		self._title.setFont(font)
 
 		self._linkBtn = QPushButton()
-		self._linkBtn.setFixedSize(QSize(20, 20))
 		self._linkBtn.clicked.connect(self.onClickLinkButton)
-		setPushButtonStyle(self._linkBtn, ":/icons/images/icons/cil-link.png")
+		UIHelp.setPushButtonStyle(self._linkBtn, ":/icons/images/icons/cil-link.png")
 
 		widget.setLayout(layoutMain)
 		layoutMain.addWidget(self._title)
@@ -37,25 +37,29 @@ class RSSItem(QWidget):
 		self._browser = TextBrowser()
 		self._browser.setOpenExternalLinks(True)
 
-		setBackGroundStyle(self)
+		UIHelp.setBackGroundStyle(self)
 		layout.addWidget(widget)
 		layout.addWidget(self._browser)
 
 		self.setLayout(layout)
 		self.hidewSummary()
+
 	def onClickLinkButton(self):
 		QDesktopServices.openUrl(self._linkUrl)
+
 	def updateSummary(self):
 		if self._browser.isVisible():
 			self.hidewSummary()
 		else:
 			self.showSummary()
+
 	def showSummary(self):
 		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._item.listWidget().height() - self._minHeight))
 		if self._isSetSummary is False:
 			self._browser.initSummary(self._data["summary"])
 			self._isSetSummary = True
 		self._browser.setVisible(True)
+
 	def hidewSummary(self):
 		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._minHeight))
 		self._browser.setVisible(False)
@@ -76,14 +80,8 @@ class RSSView(QListWidget, ViewBase):
 		# self.viewport().setAutoFillBackground(False)
 		# self.setAttribute(Qt.WA_TranslucentBackground, True)
 		# 不显示滚动条
-		# self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		# self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		# 获取屏幕高宽
-		# rect = QApplication.instance().desktop().availableGeometry(self)
-		# self.setMinimumHeight(rect.height())
-		# self.setMaximumHeight(rect.height())
-		# self.move(rect.width() - self.minimumWidth() - 18, 0)
-		# self._timer = QTimer(self, timeout=self.onMessageCreate)
+		UIHelp.hideAllScrollBar(self)
+		UIHelp.setListWidgetStyle(self)
 
 	def bindIdler(self):
 		for item in self.dataModel().urlArticles:

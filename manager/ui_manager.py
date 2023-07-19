@@ -88,38 +88,7 @@ class PageWidget():
 		self.settingValue("state", True)
 
 
-def setBackGroundStyle(widget):
-	widget.setStyleSheet("""
-QWidget {
-	background-color: rgb(27, 29, 35);
-	border-radius: 5px;
-	padding: 10px;
-}
-QWidget:hover {
-	border: 2px solid rgb(64, 71, 88);
-}
-QWidget:focus {
-	border: 2px solid rgb(91, 101, 124);
-}
-""")
 
-def setPushButtonStyle(widget: QPushButton, icon):
-	widget.setStyleSheet("""
-QPushButton {
-	background-image: url(%s);
-	background-repeat: no-repeat;
-	background-position: center;
-	border: none;
-	background-color: transparent;
-}
-QPushButton:hover {
-	background-color: rgb(40, 44, 52);
-}
-QPushButton:pressed {
-	background-color: rgb(189, 147, 249);
-	color: rgb(255, 255, 255);
-}
-""" % (icon))
 
 class UIManager_(Singleton):
 	def __init__(self):
