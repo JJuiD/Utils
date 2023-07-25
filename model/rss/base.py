@@ -1,13 +1,13 @@
 import json
 import os
 from datetime import datetime
-from threading import Thread
-from time import sleep
+
 
 import feedparser
 
 from easy.idler import IdlerList
 from easy.user_default import UserDefault
+from manager.time_manager import TimeManager
 from model.base import Model
 from view.rss import RSSView
 
@@ -53,7 +53,7 @@ class RSSUrl:
 						"link": entry.link,
 						"summary": entry.summary,
 						"published": entry.published,
-						"isRead": False
+						"isRead": 0
 					})
 					IDCounter = IDCounter + 1
 					if published is None:
@@ -73,17 +73,11 @@ urls = [
 ]
 
 HistoryFile = "rss_history"
-RssTimeLerp = 5
-
-def RSSGet(self):
-	while self.threadRun:
-		self.refresh()
-		sleep(RssTimeLerp)
 
 def rssSort(item):
 	dateStr = item["published"]
 	date = datetime.strptime(dateStr, GMT0800_FORMAT)
-	return -date.timestamp()
+	return (item["isRead"], -date.timestamp())
 	# return  (date, item["id"]) 相同使用id进行排序
 	# return (-date.timestamp(), item["id"]) 降序
 
@@ -104,9 +98,8 @@ class RSS_(Model):
 				urlArticles = json.load(file)
 		self.urlArticles = IdlerList(urlArticles, sort=rssSort)
 
-		self.thread = Thread(target=RSSGet, args=[self], name="RSSGet")
-		self.threadRun = True
-		self.thread.start()
+		TimeManager.addTimer(self.refresh, 5)
+
 	def refresh(self):
 		articles = []
 		for p in self.urlGet:

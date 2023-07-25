@@ -34,6 +34,7 @@ class IdlerList:
 		self._listeners = {}
 		self._k = 0
 		self._sort = sort
+		self.sort()
 	def __iter__(self):
 		self._k = 0
 		return self

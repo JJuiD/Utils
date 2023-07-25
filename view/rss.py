@@ -31,12 +31,13 @@ class RSSItem(QWidget):
 		font.setPixelSize(22)
 		self._titleCheckBox.setFont(font)
 		self._titleCheckBox.setEnabled(False)
+		self._titleCheckBox.setAttribute(Qt.WA_TransparentForMouseEvents)
 		self._titleCheckBox.setStyleSheet("""
 				QCheckBox::indicator:checked {
 					background-image: url(:/icons/images/icons/cil-check-alt.png);
 				}
 				""")
-		if self._data["isRead"] is True:
+		if self._data["isRead"] == 1:
 			self._titleCheckBox.setCheckState(Qt.Checked)
 
 		self._linkBtn = QPushButton()
@@ -45,7 +46,7 @@ class RSSItem(QWidget):
 
 		self._deleteBtn = QPushButton()
 		self._deleteBtn.clicked.connect(self.onClickDeleteButton)
-		UIHelp.setPushButtonStyle(self._deleteBtn, ":/icons/images/icons/cil-cut.png")
+		UIHelp.setPushButtonStyle(self._deleteBtn, ":/icons/images/icons/icon_close.png")
 
 		widget.setLayout(layoutMain)
 		layoutMain.addWidget(self._titleCheckBox)
@@ -81,9 +82,9 @@ class RSSItem(QWidget):
 		if self._isSetSummary is False:
 			self._browser.initSummary(self._data["summary"])
 			self._isSetSummary = True
-		if self._data["isRead"] is False:
+		if self._data["isRead"] == 0:
 			self._titleCheckBox.setCheckState(Qt.Checked)
-			self._data["isRead"] = True
+			self._data["isRead"] = 1
 		self._browser.setVisible(True)
 
 	def hidewSummary(self):
