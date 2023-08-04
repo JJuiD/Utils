@@ -53,7 +53,7 @@ class RSSUrl:
 						"link": entry.link,
 						"summary": entry.summary,
 						"published": entry.published,
-						"isRead": 0
+						"isRead": 0,
 					})
 					IDCounter = IDCounter + 1
 					if published is None:
@@ -97,28 +97,39 @@ class RSS_(Model):
 			with open(HistoryFile, 'r', encoding='utf-8') as file:
 				urlArticles = json.load(file)
 		self.urlArticles = IdlerList(urlArticles, sort=rssSort)
-
 		TimeManager.addTimer(self.refresh, 5)
 
 	def refresh(self):
 		articles = []
 		for p in self.urlGet:
-			info = None
-			try:
-				info = p.parse()
-			except Exception as e:
-				print("rss get parse error ", str(e))
+			print("p.parse 11111111111")
+			info = p.parse()
+			print("p.parse 2222222222222")
+			# try:
+			# except Exception as e:
+			# 	print("rss get parse error ", str(e))
 
 			if info is not None:
 				articles.extend(info)
+		print("p.parse 33333333333")
 
 		# 将新的提要内容写入本地文件
 		if len(articles) > 0:
-			self.urlArticles.extend(articles)
-			self.urlArticles.sort()
+			for item in articles:
+				print("p.parse 4444")
+				self.urlArticles.append(item)
 			print(f"RSS提要已保存到 {HistoryFile}, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
+	def remove(self, item):
+		self.urlArticles.remove(item)
+	def setRead(self, item):
+		item["isRead"] = 1
+		self.urlArticles.sort()
+	def isRead(self, item):
+		return item["isRead"] == 0
 	def exit(self):
 		self.threadRun = False
+		# for k in range(len(self.urlArticles)):
+		# 	item = self.urlArticles[k]
 		with open(HistoryFile, 'w+', encoding='utf-8') as file:
 			json.dump(self.urlArticles.json(), file, indent=4)
 			UserDefault.setValue("rss/updatetime", datetime.now().strftime(GMT0800_FORMAT))

@@ -6,12 +6,13 @@ from manager.ui_manager import *
 from view.base import *
 
 class RSSItem(QWidget):
-	def __init__(self, data, item: QListWidgetItem):
+	def __init__(self, data, item: QListWidgetItem, root):
 		QWidget.__init__(self)
 
 		layout = QVBoxLayout()
 
 		self._item = item
+		self._root = root
 		self._minHeight = 100
 		self._isSetSummary = False
 		self._data = data
@@ -68,28 +69,32 @@ class RSSItem(QWidget):
 		QDesktopServices.openUrl(self._linkUrl)
 
 	def onClickDeleteButton(self):
-		self._item.listWidget().takeItem(self._item)
+		self._root.takeItem(self._root.row(self._item))
+		self._root.dataModel().remove(self._data)
 
 	def updateSummary(self):
 		if self._browser.isVisible():
 			self.hidewSummary()
 		else:
 			self.showSummary()
-
+	def isOpen(self):
+		return self._browser.isVisible()
 	def showSummary(self):
-		listWidget = self._item.listWidget()
-		self._item.setSizeHint(QSize(listWidget.width(), listWidget.height() - self._minHeight))
+		self._item.setSizeHint(QSize(self._root.width(), self._root.height() - self._minHeight))
 		if self._isSetSummary is False:
 			self._browser.initSummary(self._data["summary"])
 			self._isSetSummary = True
-		if self._data["isRead"] == 0:
+		if self._root.dataModel().isRead(self._data):
 			self._titleCheckBox.setCheckState(Qt.Checked)
-			self._data["isRead"] = 1
+			self._root.dataModel().setRead(self._data)
 		self._browser.setVisible(True)
 
 	def hidewSummary(self):
-		self._item.setSizeHint(QSize(self._item.listWidget().width(), self._minHeight))
+		self._item.setSizeHint(QSize(self._root.width(), self._minHeight))
 		self._browser.setVisible(False)
+
+def rssOrder(item1, item2):
+	pass
 
 class RSSView(QListWidget, ViewBase):
 	EnterType = ViewEnterType.Page
@@ -110,29 +115,35 @@ class RSSView(QListWidget, ViewBase):
 		UIHelp.hideAllScrollBar(self)
 		UIHelp.setListWidgetStyle(self)
 
+		self._openItem = None
+		self._urlArticles = self.dataModel().urlArticles
+
 	def bindIdler(self):
-		for item in self.dataModel().urlArticles:
+		self.refresh()
+		self._urlArticles.addListeners(IdlerListEvent.Add, self.info)
+		self._urlArticles.addListeners(IdlerListEvent.Update, self.refresh, autoNotify=False)
+	def refresh(self):
+		# TODO: 跟直接sort的效率区别？？
+		self.clear()
+		for item in self._urlArticles:
 			self.info(item)
-		bindIdlerListWhen(self.dataModel().urlArticles, IdlerListEvent.Add, self.info)
 
 	def info(self, data):
 		item = QListWidgetItem()  # 创建QListWidgetItem对象
 		self.addItem(item)  # 添加item
-		widget = RSSItem(data, item)  # 调用上面的函数获取对应
+		widget = RSSItem(data, item, self)  # 调用上面的函数获取对应
 		self.setItemWidget(item, widget)  # 为item设置widget
-		# item.setText("11111111111111")
-		# w = RSSItem(data, self)
-		# print("!!!!!!!!!!!!!!!", w.height())
-		# w.setSizeIncrement(item.sizeHint().width(), w.height()+2)
-		# self.setItemWidget(item, w)
+		return True
+
 	def onItemDoubleClicked(self, item):
 		widget = self.itemWidget(item)
-
 		for index in range(self.count()):
 			currentItem = self.item(index)
-			itemWidget = self.itemWidget(currentItem)
+			itemWidget: RSSItem = self.itemWidget(currentItem)
 			if itemWidget == widget:
 				itemWidget.updateSummary()
+				if itemWidget.isOpen() is False:
+					self._urlArticles.on(IdlerListEvent.Update)
 			else:
 				itemWidget.hidewSummary()
 

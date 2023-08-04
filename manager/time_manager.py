@@ -1,14 +1,6 @@
 from easy.singleton import Singleton
 
-from threading import Thread
-from time import sleep
-
-TIME_DELTA = 1
-
-def timeThread(self):
-	while(self._threadRun):
-		self.refresh()
-		sleep(TIME_DELTA)
+from PySide6.QtCore import QTimer
 
 class Timer:
 	def __init__(self, call, lerp, count=None):
@@ -28,20 +20,21 @@ class Timer:
 						return True
 		return False
 
+TIME_DELTA = 1000
 
 class TimeManager_(Singleton):
 	def __init__(self):
 		self._timer = []
 
-		self._threadRun = True
-		self._thread = Thread(target=timeThread, args=[self], name="TimeManager_")
+		self._thread = QTimer()
+		self._thread.timeout.connect(self.update)
+		self._thread.setInterval(TIME_DELTA)
 		self._thread.start()
-
 	def init(self):
 		pass
 	def addTimer(self, call, lerp, count=None):
 		self._timer.append(Timer(call, lerp, count=count))
-	def refresh(self):
+	def update(self):
 		delIndex = []
 		for i in range(len(self._timer)):
 			timer = self._timer[i]
@@ -53,7 +46,7 @@ class TimeManager_(Singleton):
 			for i in delIndex[::-1]:
 				self._timer.pop(i)
 	def exit(self):
-		self._threadRun = False
+		self._thread.stop()
 
 
 
