@@ -53,6 +53,19 @@ class MainWindow(UIMainWindow):
 		# self.initMenuBar()
 		self.initManager()
 
+		self.installEventFilter(self)
+
+		tray_icon = QSystemTrayIcon(self)
+		tray_icon.setIcon(QIcon("images/icons/cil-cloudy.png"))
+		tray_icon.show()
+
+		tray_icon.activated.connect(self.on_tray_activated)
+
+	def on_tray_activated(self, reason):
+		if reason == QSystemTrayIcon.DoubleClick:
+			# 显示主窗口
+			self.showNormal()
+
 	def onSetCurrentWidget(self, sender):
 		name = sender.objectName()
 		self.resetStyle(name)
@@ -301,15 +314,41 @@ class MainWindow(UIMainWindow):
 		self.bottomGrip.setGeometry(0, self.height() - 10, self.width(), 10)
 	def initManager(self):
 		UIManager.init(self)
-		TimeManager.init()
-		ModelManager.init()
-	def closeEvent(self, a0: QCloseEvent):
-		Log.exit()
-		UIManager.exit()
-		TimeManager.exit()
-		ModelManager.exit()
-		a0.accept()
 
+		TimeManager.init()
+		self._thread = QTimer()
+		self._thread.timeout.connect(TimeManager.update)
+		self._thread.setInterval(1000)
+		self._thread.start()
+
+		ModelManager.init()
+
+	def eventFilter(self, watched: QObject, event: QEvent):
+		if event.type() == QEvent.ApplicationStateChange:
+			print("ApplicationStateChange")
+		return super().eventFilter(watched, event)
+	def closeEvent(self, event: QCloseEvent):
+		# 创建消息框
+		message_box = QMessageBox(self)
+		message_box.setIcon(QMessageBox.Question)
+		message_box.setWindowTitle("保存到后台")
+		message_box.setText("是否将应用程序保存到后台？")
+		message_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+		# 如果用户选择“是”，将应用程序保存到后台
+		if message_box.exec() == QMessageBox.Yes:
+			QCoreApplication.instance().setQuitLockEnabled(True)
+			TimeManager.sleep()
+			event.ignore()
+			self.hide()
+		else:
+			# 如果用户选择“否”，执行默认的关闭操作
+			Log.exit()
+			UIManager.exit()
+			# TimeManager.exit()
+			ModelManager.exit()
+			self._thread.stop()
+			super().closeEvent(event)
 
 if __name__ == "__main__":
 	app = QApplication([])

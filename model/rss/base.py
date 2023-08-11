@@ -40,7 +40,7 @@ class RSSUrl:
 	def parse(self):
 		global IDCounter
 		feed = feedparser.parse(self._url)
-		if feed.bozo == 0:
+		if feed.bozo == 0 or feed.bozo is False:
 			entries = []
 			published = None
 			for entry in feed.entries:
@@ -48,6 +48,7 @@ class RSSUrl:
 				if seconds > 0:
 					entries.append({
 						"id": IDCounter,
+						"key": self._key,
 						"web_title": feed.feed.title,
 						"title": entry.title,
 						"link": entry.link,
@@ -69,7 +70,8 @@ class RSSUrl:
 		return None
 
 urls = [
-	["gcores", "http://www.gcores.com/rss", 60*60*24]
+	["gcores", "http://www.gcores.com/rss", 60*60*24],
+	["indienova", "https://indienova.com/feed/", 60*60*24],
 ]
 
 HistoryFile = "rss_history"
@@ -97,24 +99,18 @@ class RSS_(Model):
 			with open(HistoryFile, 'r', encoding='utf-8') as file:
 				urlArticles = json.load(file)
 		self.urlArticles = IdlerList(urlArticles, sort=rssSort)
-		TimeManager.addTimer(self.refresh, 5)
+		TimeManager.addTimer(self.refresh, 30*60, inSleep=True)
 
 	def refresh(self):
 		articles = []
 		for p in self.urlGet:
 			info = p.parse()
-			# try:
-			# except Exception as e:
-			# 	print("rss get parse error ", str(e))
-
 			if info is not None:
 				articles.extend(info)
-		print("p.parse 33333333333")
 
 		# 将新的提要内容写入本地文件
 		if len(articles) > 0:
 			for item in articles:
-				print("p.parse 4444")
 				self.urlArticles.append(item)
 			print(f"RSS提要已保存到 {HistoryFile}, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
 	def remove(self, item):

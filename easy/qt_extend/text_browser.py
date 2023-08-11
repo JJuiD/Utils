@@ -28,6 +28,8 @@ class TextBrowser(QTextBrowser):
 				request = QNetworkRequest(url)
 				self._network.get(request)
 				self._count = self._count + 1
+		elif self._count == 0:
+			self.setHtml(self._text)
 	def onHandleNetworkReply(self, reply):
 		self._count = self._count - 1
 		if reply.error() == QNetworkReply.NoError:

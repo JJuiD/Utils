@@ -26,7 +26,7 @@ class RSSItem(QWidget):
 		# font.setPixelSize(22)
 		# self._title.setFont(font)
 
-		self._titleCheckBox = QCheckBox(data["title"])
+		self._titleCheckBox = QCheckBox("[{}] {}".format(data["key"], data["title"]))
 		font = self._titleCheckBox.font()
 		font.setBold(True)
 		font.setPixelSize(22)
