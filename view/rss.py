@@ -115,8 +115,10 @@ class RSSView(QListWidget, ViewBase):
 		UIHelp.hideAllScrollBar(self)
 		UIHelp.setListWidgetStyle(self)
 
-		self._openItem = None
+		self._clickItem = None
 		self._urlArticles = self.dataModel().urlArticles
+
+		self.installEventFilter(self)
 
 	def bindIdler(self):
 		self.refresh()
@@ -143,9 +145,19 @@ class RSSView(QListWidget, ViewBase):
 			if itemWidget == widget:
 				itemWidget.updateSummary()
 				if itemWidget.isOpen() is False:
+					self._clickItem = None
 					self._urlArticles.on(IdlerListEvent.Update)
+				else:
+					self._clickItem = widget
 			else:
 				itemWidget.hidewSummary()
+
+	def eventFilter(self, obj, event):
+		if obj == self.verticalScrollBar() and event.type() == QEvent.Wheel:
+			if self._clickItem != None:
+				return True
+		return super().eventFilter(obj, event)
+			
 
 	def removeItem(self, item):
 		# 删除item

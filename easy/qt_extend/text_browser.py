@@ -1,5 +1,5 @@
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QTextDocument
+from PySide6.QtCore import Qt, QEvent
+from PySide6.QtGui import QTextDocument, QWheelEvent
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from PySide6.QtWidgets import QTextBrowser
 import re
@@ -14,6 +14,8 @@ class TextBrowser(QTextBrowser):
 
 		self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+
 	def initSummary(self, text):
 		# QTextBrowser.setHtml(self, text)
 		self._text = text
@@ -33,3 +35,8 @@ class TextBrowser(QTextBrowser):
 
 		if self._count == 0:
 			self.setHtml(self._text)
+
+	# def eventFilter(self, obj, event):
+	# 	if obj == self.verticalScrollBar() and event.type() == QEvent.Wheel:
+	# 		return super().eventFilter(obj, event)
+	# 	return super().eventFilter(obj, event)

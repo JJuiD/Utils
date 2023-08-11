@@ -102,9 +102,7 @@ class RSS_(Model):
 	def refresh(self):
 		articles = []
 		for p in self.urlGet:
-			print("p.parse 11111111111")
 			info = p.parse()
-			print("p.parse 2222222222222")
 			# try:
 			# except Exception as e:
 			# 	print("rss get parse error ", str(e))
