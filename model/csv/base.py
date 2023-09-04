@@ -22,7 +22,7 @@ class CsvModel_(Model):
 		self.inputPath = Idler("")
 		self.outputPath = Idler("")
 
-		self._process : Process = None
+		self._process: Process = None
 	def getComBoBoxItems(self):
 		return [
 			"lua",

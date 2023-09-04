@@ -353,7 +353,7 @@ def makeElem(luaType, strValue):
 
 	return ret
 
-def exportLua(s):
+def exportTo(fo, s):
 	s = autoMake(s)
 	def buildStr(typ,k,v = ''):
 		if typ == list:
@@ -364,7 +364,8 @@ def exportLua(s):
 			return "'%s'" % k
 		return k
 
-	if type(s) != list and type(s) != dict : return buildStr(type(s), s)
+	if type(s) != list and type(s) != dict:
+		return buildStr(type(s), s)
 
 	def pairs(typ,ret):
 		if typ == list:
@@ -379,7 +380,11 @@ def exportLua(s):
 			if not isValue:
 				fms += space
 			# str += ('[' if typ == list else '{')
-			fms += '{'
+			if typ == dict:
+				fms += fo.Dict
+			else:
+				fms += fo.List
+
 			index = 0
 			orderkey = ''
 			for k in pairs(typ,_data):
@@ -391,11 +396,12 @@ def exportLua(s):
 				index = index + 1
 			if typ == dict:
 				if len(orderkey) == 0:
-					fms += '__order={}}'
+					fms += '__order=' + fo.toList()
 				else:
-					fms += ',__order={%s}}' % orderkey[1:]
+					fms += ',__order=' + fo.toList(orderkey[1:])
+				fms += fo.DictEnd
 			else:
-				fms += '}'
+				fms += fo.ListEnd
 			# fms += '{0}'.format('}')
 		else:
 			return buildStr(type(_data), _data)
@@ -422,6 +428,8 @@ class Process:
 	Note = None
 	Dict = None
 	DictEnd = None
+	List = None
+	ListEnd = None
 
 	def __init__(self):
 		self._file = None
@@ -475,7 +483,7 @@ class Process:
 								val = row[i]
 								if val == '':
 									val = self._defaultVal[i]
-								writeLineStr(self._file, ("%s = %s,") % (self._defaultArg[i], exportLua(val)))
+								writeLineStr(self._file, ("%s = %s,") % (self._defaultArg[i], exportTo(self, val)))
 								if i == (len(row) - 1):
 									self.writeDict(isOver=True)
 					else:
@@ -504,6 +512,8 @@ class LuaProcess(Process):
 	Note = "-- %s"
 	Dict = "%s = {"
 	DictEnd = "}"
+	List = "{"
+	ListEnd = "}"
 
 	def __init__(self):
 		Process.__init__(self)
@@ -514,6 +524,14 @@ class LuaProcess(Process):
 
 		self.writeNote(self._namespace)
 		self.writeDict(self._namespace)
+
+	def toList(self, v):
+		if v is None:
+			return '{}'
+		if type(v) == list:
+			pass
+		return '{%s}' % v
+
 	def writeEnd(self):
 		s = ""
 		self.writeDict("__default")
@@ -527,8 +545,8 @@ class LuaProcess(Process):
 					s = "'%s'" % key
 				else:
 					s = s + ",'%s'" % key
-				writeLineStr(self._file, "%s = %s," % (key, exportLua(v)))
-		writeLineStr(self._file, "__order = {%s}" % (s))
+				writeLineStr(self._file, "%s = %s," % (key, exportTo(self, v)))
+		writeLineStr(self._file, "__order=" + self.toList(s))
 		self.writeDict(isOver=True)
 		self.writeDict(isOver=True)
 		self.writeDict(isOver=True)
@@ -542,3 +560,33 @@ class LuaProcess(Process):
 			writeLineStr(self._file, 'require "config.%s"' % (v))
 		self._file.close()
 		self.clear()
+
+
+class GDScriptProcess(Process):
+	Suffix = "gd"
+	Note = "# %s"
+	Dict = "%s = {"
+	DictEnd = "}"
+	List = "["
+	ListEnd = "]"
+
+	def __init__(self):
+		Process.__init__(self)
+
+	def writeBegin(self, fileName):
+		self._file = open(self._outpath + fileName + "." + self.Suffix, "w", encoding='utf-8')
+		self._namespace = "csv." + fileName
+
+		self.writeNote(self._namespace)
+		self.writeDict(self._namespace)
+
+	def toList(self, v):
+		if v is None:
+			return '[]'
+		if type(v) == list:
+			pass
+		return '[%s]' % v
+	def writeEnd(self):
+		pass
+	def writeOver(self, csvList):
+		pass
