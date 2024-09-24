@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "static/js",          // 输出目录
+    "rootDir": "./scripts",         // 输入目录
+    "target": "es5",            // 编译目标
+    "module": "commonjs",       // 模块系统
+    "strict": true,             // 启用所有严格类型检查选项
+    "sourceMap": false,
+    "esModuleInterop": true      // 允许从 CommonJS 模块中默认导入
+  },
+  "include": ["scripts/**/*.ts"],   // 包含的 TypeScript 文件
+  "exclude": []    // 排除的文件夹
+}

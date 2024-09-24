@@ -1,0 +1,32 @@
+<link rel="stylesheet" href="{{ css_url }}">
+
+
+<h1>消息展示</h1>
+<h1>{{data.updatetime}}</h1>
+<div class="container" id="main-content">
+    <!-- 邮件项将在这里动态生成 -->
+    {% for item in data.history %}
+    <div class="item" onclick="toggleMessage('{{ item.id}}')">
+        <div>
+            <div class="web">{{ item.web_title}}</div>
+            <div class="title">{{ item.title}}</div>
+        </div>
+        <div class="published">{{ item.published}}</div>
+    </div>
+    <div class="summary", style="display: none;", id="{{item.id}}">
+        {{ item.summary | safe}}
+    </div>
+    {% endfor %}
+
+    <!-- 邮件组件模板 -->
+    <!-- <template id="rss-template">
+        <div class="rss-item">
+            <div>
+                <div class="rss-web-title"></div>
+                <div class="rss-title"></div>
+            </div>
+            <div class="rss-published"></div>
+        </div>
+        <div class="rss-summary"></div>
+    </template> -->
+</div>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Example</title>
+    <link rel="stylesheet" href="{{ css_url }}">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Sidebar</h2>
+        <ul>
+            <li><a href="#" class="nav-link" onclick="showContent('rss', this)">RSS</a></li>
+            <li><a href="#" class="nav-link" onclick="showContent('picture', this)">Picture</a></li>
+            <!-- <li><a href="#" class="nav-link" onclick="showContent('services', this)">Services</a></li>
+            <li><a href="#" class="nav-link" onclick="showContent('contact', this)">Contact</a></li> -->
+        </ul>
+    </div>
+
+    <div class="content" id="main-content">
+        <h1>Welcome to the Main Content</h1>
+        <p>This is the main content of the page. You can place any information here.</p>
+    </div>
+
+    <script src="{{ js_url }}"></script>
+</body>
+</html>
