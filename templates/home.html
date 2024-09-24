@@ -7,20 +7,55 @@
     <link rel="stylesheet" href="{{ css_url }}">
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Sidebar</h2>
-        <ul>
-            <li><a href="#" class="nav-link" onclick="showContent('rss', this)">RSS</a></li>
-            <li><a href="#" class="nav-link" onclick="showContent('picture', this)">Picture</a></li>
-            <!-- <li><a href="#" class="nav-link" onclick="showContent('services', this)">Services</a></li>
-            <li><a href="#" class="nav-link" onclick="showContent('contact', this)">Contact</a></li> -->
-        </ul>
+    <div class="shell">
+        <header>
+            <div class="image-text">
+                <span class="image">
+                    <!-- <img src="./1.jpg" alt=""> -->
+                </span>
+                <div class="text logo-text">
+                    <span class="name">1111111111111</span>
+                    <span class="software">-22222222222-</span>
+                </div>
+            </div>
+        </header>
+        <div class="menu-bar">
+            <div class="menu">
+                <ul class="menu-links">
+                    <li class="nav-link">
+                        <a href="#" onclick="showContent('rss', this)">
+                            <i class="iconfont icon-shouye icon"></i>
+                            <span class="text nac-text">RSS</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="bottom-content">
+                <li class="">
+                    <a href="#">
+                        <i class="iconfont icon-zhuxiaoyuan icon"></i>
+                        <span class="text nac-text">注销</span>
+                    </a>
+                </li>
+                <li class="mode">
+                    <div class="sun-moon">
+                        <i class="iconfont icon-rijian icon sun"></i>
+                        <i class="iconfont icon-yejian icon moon"></i>
+                    </div>
+                    <span class="mode-text text">夜间模式</span>
+                    <div class="toggle-switch" onclick="onClickModeToggleSwitch()">
+                        <span class="switch"></span>
+                    </div>
+                </li>
+            </div>
+        </div>
     </div>
 
     <div class="content" id="main-content">
         <h1>Welcome to the Main Content</h1>
         <p>This is the main content of the page. You can place any information here.</p>
     </div>
+
 
     <script src="{{ js_url }}"></script>
 </body>

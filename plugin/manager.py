@@ -24,13 +24,16 @@ class _PluginManager(Singleton):
         plugin = self._plugins[name]
         self._last = plugin
         return plugin.open()
-
+    
+    def get_plugin(self, name: str):
+        return self._plugins[name]
+    
     def execute_plugins_by_type(self, name: str):
         print(f"Executing plugins of type {name}:")
 
-    # def on_app_quit(self):
-    #     for plugin in self._plugins.values():
-    #         plugin.on_app_quit()
+    def on_app_quit(self):
+        for plugin in self._plugins.values():
+            plugin.on_app_quit()
 
 PluginManager: Final = _PluginManager()
 PluginManager.register(RSSPlugin('rss'))

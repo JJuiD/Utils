@@ -28,12 +28,13 @@ class PluginConfig:
     def to_json(self):
         raise NotImplementedError("PluginConfig to_json should be overridden.")
 
+    
 class Plugin:
     def __init__(self, name):
         self.name = name
 
         self._config = None
-
+        # self._resources: PluginResource = PluginResource()
 
     def init(self):
         raise NotImplementedError("Plugin init should be overridden.")
@@ -43,6 +44,16 @@ class Plugin:
 
     def close(self):
         raise NotImplementedError("Plugin close should be overridden.")
+    
+    def delete_item(self, key: str | int):
+        pass
+
+    def get_item(self, key: str | int):
+        pass
+
+    # @property
+    # def resources(self):
+    #     return self._resources
 
     @property
     def config(self):
@@ -52,12 +63,18 @@ class Plugin:
         return self._config
 
     def save_config(self):
+        save_data = self._config
         file_path = '{}.json'.format(self.name)
         with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(self._config, file, indent=4)
+            json.dump(save_data, file, indent=4)
 
     def config_default(self):
         return {}
+    
+    def on_app_quit(self):
+        self.save_config()
+
+   
 
     def __str__(self):
         return f"{self.name} (Type: {self.name})"

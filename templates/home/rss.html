@@ -3,30 +3,26 @@
 
 <h1>消息展示</h1>
 <h1>{{data.updatetime}}</h1>
-<div class="container" id="main-content">
-    <!-- 邮件项将在这里动态生成 -->
-    {% for item in data.history %}
-    <div class="item" onclick="toggleMessage('{{ item.id}}')">
-        <div>
-            <div class="web">{{ item.web_title}}</div>
-            <div class="title">{{ item.title}}</div>
-        </div>
-        <div class="published">{{ item.published}}</div>
-    </div>
-    <div class="summary", style="display: none;", id="{{item.id}}">
-        {{ item.summary | safe}}
-    </div>
-    {% endfor %}
+<!-- 邮件项将在这里动态生成 -->
 
-    <!-- 邮件组件模板 -->
-    <!-- <template id="rss-template">
-        <div class="rss-item">
-            <div>
-                <div class="rss-web-title"></div>
-                <div class="rss-title"></div>
+<div class="rss-body">
+    <div class="rss-list">
+        {% for item in data.history %}
+        <div class="item" id="{{ item.md5 }}" onclick="onUpdateDisplay('rss', 'rss-display', '{{ item.md5 }}')">
+            <div class="header">
+                <div class="web">{{ item.web_title}}</div>
+                <div class="published">{{ format_date(item.published)}}</div>
             </div>
-            <div class="rss-published"></div>
+            <div class="title">{{ item.title}}</div>
+            <div class="buttons">
+                <button class="jbutton" onclick="jumpTo('rss', '{{ item.md5 }}'); event.stopPropagation();">跳转</button>
+                <button class="cbutton" onclick="deleteItem('rss', '{{ item.md5 }}'); event.stopPropagation();">删除</button>
+            </div>
         </div>
-        <div class="rss-summary"></div>
-    </template> -->
+        <!-- <div class="summary", style="display: none;", id="{{item.id}}">
+            {{ item.summary | safe}}
+        </div> -->
+        {% endfor %}
+    </div>
+    <div class="rss-display" id="rss-display"></div>
 </div>
