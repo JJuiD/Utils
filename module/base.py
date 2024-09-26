@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 from typing import Final
 
 def read_json_file(file_path: str, default_data: dict = {}):
@@ -56,8 +57,16 @@ class BaseConfig:
         if not os.path.exists(file_path):
             return default
 
+        start_time = time.time()  # 记录开始时间
+
+        data = None
         with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
+            data = json.load(file)
+
+        end_time = time.time()  # 记录结束时间
+        elapsed_time = end_time - start_time  # 计算耗时
+        print(f"json.load{file_path} cost: {elapsed_time:.6f}秒")
+        return data
 
     def json_save(self, data, key=None):
         file_path = ""
@@ -104,6 +113,12 @@ class ListConfig(BaseConfig):
     def next_filter(self, f):
         return next((item for item in self._items if f(item)), None)
 
+    def sort(self, f):
+        self._items = sorted(self._items, key=f)
+
+    def remove(self, v):
+        return self._items.remove(v)
+
 class DictConfig(BaseConfig):
     def __init__(self, file: str, name: str, single: bool):
         super().__init__(file, name)
@@ -147,17 +162,20 @@ class DictConfig(BaseConfig):
                     ret.clear()
         self.json_save(key_index, "keys")
 
-    def get(self, key):
+    def load_part(self, key):
         index = self._keys.get(key)
         if index is not None:
             if self._loaded_index.get(index, False) == False:
                 self._items.update(self.json_load(str(index), default={}))
                 self._loaded_index[index] = True
-            else:
-                pass
+
+    def get(self, key):
+        self.load_part(key)
         return self._items.get(key)
 
     def earse_key(self, key):
+        del self._keys[key]
+        self.load_part(key)
         del self._items[key]
 
     def update(self, v):

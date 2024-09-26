@@ -69,10 +69,23 @@ function onUpdateDisplay(module, display_name, key) {
     console.log('module', module, display_name, key);
     fetch(`/json?module=${module}&key=${key}`)
         .then(function (response) {
-            return response.text();
+            return response.json();
         })
-        .then(function (html) {
-            content.innerHTML = html;
+        .then(function (data) {
+            console.log('comment', data.summary, data.comment);
+            content.innerHTML = data.summary;
+            if (typeof data.comment === 'string' && data.comment.length > 0) {
+                const iframe = document.createElement('iframe');
+                iframe.classList.add('rss-iframe');
+                iframe.src = data.comment; // 替换为你想要加载的 URL
+                iframe.onload = () => {
+                    console.log('Iframe 加载完成!');
+                    // iframe.contentWindow.scrollTo(0, 0); // 滚动到顶部
+                    // iframe.style.height = '3000px';
+                };
+
+                content.appendChild(iframe);
+            }
             display_now_key = '';
             content.scrollTop = 0;
             if (display_next_key.length > 0) {
@@ -84,19 +97,26 @@ function onUpdateDisplay(module, display_name, key) {
 }
 
 function deleteItem(module, md5) {
-    if (confirm(`确定要删除 ${md5} 吗？`)) {
-        const item = document.getElementById(md5);
-        if (item) {
-            fetch(`/delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ module: module, key: md5 }),
-            }).then(function (data) {
-                item.remove(); // 从 DOM 中删除元素
-            });
-        }
+    // if (confirm(`确定要删除 ${md5} 吗？`)) {}
+    const item = document.getElementById(md5);
+    if (item) {
+        item.classList.add('fade-out'); // 添加动画类
+        // 动画结束后删除元素
+        item.addEventListener(
+            'transitionend',
+            () => {
+                fetch(`/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ module: module, key: md5 }),
+                }).then(function (data) {
+                    item.remove(); // 从 DOM 中删除元素
+                });
+            },
+            { once: true }
+        );
     }
 }
 

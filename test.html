@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直接嵌入HTML</title>
+    <style>
+        iframe {
+            width: 100%;
+            height: 3000px; /* 根据需要调整高度 */
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>主页面</h1>
+    <button id="loadButton">加载页面</button>
+    <iframe onload="onIFrameLoad()" id="test_frame" title="嵌入的内容"></iframe>
+</body>
+<script>
+    const iframe = document.getElementById('test_frame');
+    const loadButton = document.getElementById('loadButton');
+
+    // 设置按钮点击事件
+    loadButton.addEventListener('click', () => {
+        iframe.src = "https://indienova.com/indie-game-news/guide-2024-0923-0929-part-3/#comments";
+    });
+
+    iframe.onload = () => {
+        console.log('iframe 已加载：', iframe.src);
+    };
+</script>
+</html>

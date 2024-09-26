@@ -30,7 +30,7 @@ def home_page(page):
 def json_get():
     module_key = request.args.get('module')
     key = request.args.get('key', default='', type=str)
-    return ModuleManager.get_module(module_key).get_item(key)
+    return jsonify(ModuleManager.get_module(module_key).get_item(key))
 
 @app.route('/delete', methods=['POST'])
 def delete_item():

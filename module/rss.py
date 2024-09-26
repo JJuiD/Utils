@@ -1,4 +1,5 @@
 import hashlib
+from typing import Final
 import feedparser
 from module.base import DataConfig, DictConfig, ListConfig, ModuleBase
 from datetime import datetime
@@ -15,7 +16,8 @@ def calc_lerptime(strptime: datetime):
 def rss_sort(item):
     dateStr = item["published"]
     date = datetime.strptime(dateStr, GMT0800_FORMAT)
-    return (False, -date.timestamp())
+    # return (False, -date.timestamp())
+    return -date.timestamp()
 
 def string_to_md5(input_string: str):
     # 创建一个 md5 哈希对象
@@ -43,15 +45,23 @@ class _RSSUrl:
                 seconds = self._module.calc_lerptime(datetime.strptime(entry.published, GMT0800_FORMAT))
                 if seconds > 0:
                     md5 = string_to_md5(entry.link)
+
+                    entries[1][md5] = {
+                        "summary": entry.summary,
+                        "comment": ""
+                    }
+
+                    if hasattr(entry, "comments"):
+                        entries[1][md5]["comment"] = entry.comments
+
                     entries[0].append({
                         "web_title": feed.feed.title,
                         "title": entry.title,
                         "link": entry.link,
                         "published": entry.published,
                         "md5": md5,
-                        "is_read": 0
+                        "is_read": 0,
                     })
-                    entries[1][md5] = entry.summary
                 else:
                     break
 
@@ -61,6 +71,8 @@ class _RSSUrl:
                 # self.setting()
             return entries
         return None
+
+RSSLimit: Final = 10
 
 
 class RSSModule(ModuleBase):
@@ -91,6 +103,7 @@ class RSSModule(ModuleBase):
         # self.refresh_item()
 
     def open(self):
+        print("open(self)", self.is_first)
         if self.is_first:
             self._setting.load()
             self._history.load()
@@ -136,6 +149,27 @@ class RSSModule(ModuleBase):
             sorted_keys.append(v["md5"])
         self._summary.save(sorted_keys=sorted_keys)
 
+
+    def prune_history(self):
+        if len(self._history) < RSSLimit:
+            return
+
+        # 优先删除已读的内容
+        read_items = [item for item in self._history if item["is_read"]]
+
+        # 删除已读内容
+        while len(self._history) > RSSLimit and len(read_items) > 0:
+            oldest_read = min(read_items, key=lambda item: item["published"])
+            self._history.remove(oldest_read)
+            self._summary.earse_key(oldest_read["md5"])
+            read_items.remove(oldest_read)
+
+        # 如果仍然超过最大长度，按时间远到近删除
+        while len(self._history) > RSSLimit:
+            oldest_item = min(self._history, key=lambda item: item["published"])
+            self._history.remove(oldest_item)
+            self._summary.earse_key(oldest_read["md5"])
+
     def refresh_item(self):
         articles = []
         for p in self._urls:
@@ -148,7 +182,10 @@ class RSSModule(ModuleBase):
             for item in articles:
                 self._history.extend(item[0])
                 self._summary.update(item[1])
+
+            self.prune_history()
             self._setting.value("count", len(self._history))
+            self._history.sort(rss_sort)
             self.updatetime = datetime.now().strftime(GMT0800_FORMAT)
             print(f"RSS提要已保存, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
 

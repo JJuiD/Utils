@@ -30,7 +30,6 @@ class _ModuleManager:
         result = module.open()
         if module.is_first:
             module.is_first = False
-        print("result", result)
         return result
 
     def get_module(self, name: str):
@@ -44,7 +43,6 @@ class _ModuleManager:
             module.on_app_quit()
         # TODO: 退出重复调用
         self._modules.clear()
-        print("self._modules", self, len(self._modules))
 
 ModuleManager = _ModuleManager()
 ModuleManager.register(RSSModule('rss'))

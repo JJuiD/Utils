@@ -14,6 +14,7 @@
                 <div class="published">{{ format_date(item.published)}}</div>
             </div>
             <div class="title">{{ item.title}}</div>
+            <div class="red-dot"></div>
             <div class="buttons">
                 <button class="jbutton" onclick="jumpTo('rss', '{{ item.md5 }}'); event.stopPropagation();">跳转</button>
                 <button class="cbutton" onclick="deleteItem('rss', '{{ item.md5 }}'); event.stopPropagation();">删除</button>
@@ -24,5 +25,7 @@
         </div> -->
         {% endfor %}
     </div>
-    <div class="rss-display" id="rss-display"></div>
+    <div class="rss-display" id="rss-display">
+        <iframe src=""></iframe>
+    </div>
 </div>
