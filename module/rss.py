@@ -1,8 +1,11 @@
 import hashlib
 from typing import Final
 import feedparser
+from flask import request
 from module.base import DataConfig, DictConfig, ListConfig, ModuleBase
 from datetime import datetime
+
+from module.net import AppNet
 
 GMT0800_FORMAT = "%a, %d %b %Y %H:%M:%S +0800"
 UPDATE_TIME = "Thu, 18 Sep 2024 16:33:40 +0800"
@@ -39,29 +42,27 @@ class _RSSUrl:
     def parse(self):
         feed = feedparser.parse(self._url)
         if feed.bozo == 0 or feed.bozo is False:
-            entries = [[], {}]
+            entries = []
             # published = None
             for entry in feed.entries:
                 seconds = self._module.calc_lerptime(datetime.strptime(entry.published, GMT0800_FORMAT))
                 if seconds > 0:
                     md5 = string_to_md5(entry.link)
 
-                    entries[1][md5] = {
-                        "summary": entry.summary,
-                        "comment": ""
-                    }
-
-                    if hasattr(entry, "comments"):
-                        entries[1][md5]["comment"] = entry.comments
-
-                    entries[0].append({
+                    rss_item = {
                         "web_title": feed.feed.title,
                         "title": entry.title,
                         "link": entry.link,
                         "published": entry.published,
                         "md5": md5,
                         "is_read": 0,
-                    })
+                        "summary": entry.summary,
+                    }
+
+                    if hasattr(entry, "comments"):
+                        rss_item["comment"] = entry.comments
+
+                    entries.append(rss_item)
                 else:
                     break
 
@@ -81,7 +82,7 @@ class RSSModule(ModuleBase):
 
     _setting: DataConfig
     _history: ListConfig
-    _summary: DictConfig
+    # _summary: DictConfig
 
     def init(self):
         self._urls = []
@@ -92,8 +93,10 @@ class RSSModule(ModuleBase):
             "count": 0,
             "delete_read": 1
         })
-        self._history = ListConfig("history", self.name, True)
-        self._summary = DictConfig("summary", self.name, False)
+        self._history = ListConfig("history", self.name, False, sort_f=rss_sort)
+
+        AppNet.app.add_url_rule('/rss_page', self.get_history)
+        # self._summary = DictConfig("summary", self.name, False)
 
         # test
         # self._setting.load()
@@ -107,13 +110,13 @@ class RSSModule(ModuleBase):
         if self.is_first:
             self._setting.load()
             self._history.load()
-            self._summary.load()
-
+            # self._summary.load()
         self.refresh_item()
-        return {
-            "updatetime": self.updatetime,
-            "history": self._history
-        }
+        return
+
+    def get_history(self):
+        index = request.args.get('index', type=int)
+        return self._history.load_part(index)
 
     def close(self):
         pass
@@ -131,23 +134,21 @@ class RSSModule(ModuleBase):
         return (strptime - now_time).total_seconds()
 
     def delete_item(self, key: str | int):
+        # self._history.earse_filter(lambda item: item["md5"] != key)
         self._history.earse_filter(lambda item: item["md5"] != key)
-        self._summary.earse_key(key)
 
     def get_item(self, key: str | int):
         first_item = self._history.next_filter(lambda item: item["md5"] == key)
         if first_item is not None:
             first_item["is_read"] = 1
-        return self._summary.get(key)
+        # item = self._history.get(key)
+        # if item is not None:
+        #     item["is_read"] = 1
+        return first_item
 
     def on_app_quit(self):
         self._setting.save()
         self._history.save()
-
-        sorted_keys = []
-        for v in self._history:
-            sorted_keys.append(v["md5"])
-        self._summary.save(sorted_keys=sorted_keys)
 
 
     def prune_history(self):
@@ -161,14 +162,14 @@ class RSSModule(ModuleBase):
         while len(self._history) > RSSLimit and len(read_items) > 0:
             oldest_read = min(read_items, key=lambda item: item["published"])
             self._history.remove(oldest_read)
-            self._summary.earse_key(oldest_read["md5"])
+            # self._history.earse_key(oldest_read["md5"])
             read_items.remove(oldest_read)
 
         # 如果仍然超过最大长度，按时间远到近删除
         while len(self._history) > RSSLimit:
             oldest_item = min(self._history, key=lambda item: item["published"])
             self._history.remove(oldest_item)
-            self._summary.earse_key(oldest_read["md5"])
+            # self._history.earse_key(oldest_item["md5"])
 
     def refresh_item(self):
         articles = []
@@ -179,13 +180,12 @@ class RSSModule(ModuleBase):
 
         # 将新的提要内容写入本地文件
         if len(articles) > 0:
-            for item in articles:
-                self._history.extend(item[0])
-                self._summary.update(item[1])
+            for items in articles:
+                self._history.extend(items)
 
             self.prune_history()
             self._setting.value("count", len(self._history))
-            self._history.sort(rss_sort)
+            # self._history.sort(rss_sort)
             self.updatetime = datetime.now().strftime(GMT0800_FORMAT)
             print(f"RSS提要已保存, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
 

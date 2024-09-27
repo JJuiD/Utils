@@ -7,24 +7,26 @@
 
 <div class="rss-body">
     <div class="rss-list">
-        {% for item in data.history %}
-        <div class="item" id="{{ item.md5 }}" onclick="onUpdateDisplay('rss', 'rss-display', '{{ item.md5 }}')">
-            <div class="header">
-                <div class="web">{{ item.web_title}}</div>
-                <div class="published">{{ format_date(item.published)}}</div>
-            </div>
-            <div class="title">{{ item.title}}</div>
-            <div class="red-dot"></div>
-            <div class="buttons">
-                <button class="jbutton" onclick="jumpTo('rss', '{{ item.md5 }}'); event.stopPropagation();">跳转</button>
-                <button class="cbutton" onclick="deleteItem('rss', '{{ item.md5 }}'); event.stopPropagation();">删除</button>
-            </div>
-        </div>
+        <!-- {% for item in data.history %} -->
         <!-- <div class="summary", style="display: none;", id="{{item.id}}">
             {{ item.summary | safe}}
         </div> -->
-        {% endfor %}
+        <!-- {% endfor %} -->
     </div>
+    <template>
+        <div class="item">
+            <div class="header">
+                <div class="web"></div>
+                <div class="published"></div>
+            </div>
+            <div class="title"></div>
+            <div class="red-dot"></div>
+            <div class="buttons">
+                <button class="jbutton">跳转</button>
+                <button class="cbutton">删除</button>
+            </div>
+        </div>
+    </template>
     <div class="rss-display" id="rss-display">
         <iframe src=""></iframe>
     </div>

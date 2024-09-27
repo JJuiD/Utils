@@ -5,6 +5,7 @@ from markupsafe import escape
 
 
 from module.manager import ModuleManager
+from module.net import AppNet
 
 app = Flask(__name__)
 
@@ -21,10 +22,10 @@ def home():
     js_url = url_for('static', filename='js/home.js')
     return render_template('home.html', css_url=css_url, js_url=js_url)
 
-@app.route('/home/<page>')
-def home_page(page):
+@app.route('/<page>')
+def page(page):
     css_url = url_for('static', filename=f'css/{page}.css')
-    return render_template(f'home/{page}.html', css_url=css_url, format_date=format_date, data=ModuleManager.open(page))
+    return render_template(f'home/{page}.html', css_url=css_url, data=ModuleManager.open(page))
 
 @app.route('/json')
 def json_get():
@@ -65,4 +66,4 @@ atexit.register(cleanup)
 
 if __name__ == '__main__':
     # debug=True 会执行两次
-    app.run(debug=False)
+    AppNet.run(app, debug=False)

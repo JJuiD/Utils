@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import time
+import asyncio
+from collections import OrderedDict
 from typing import Final
 
 def read_json_file(file_path: str, default_data: dict = {}):
@@ -79,19 +81,49 @@ class BaseConfig:
             json.dump(data, file, indent=4)
 
 class ListConfig(BaseConfig):
-    def __init__(self, file: str, name: str, single: bool):
+    def __init__(self, file: str, name: str, single: bool, sort_f):
         super().__init__(file, name)
 
         self._items = []
         self._single = single
+        # self._sorted = sort_f
+
+        if not single:
+            self._keys: list = []
+            self._loaded_index: dict = {}
 
     def load(self):
         if self._single:
             self._items = self.json_load(default=[])
+            return
+
+        self._keys = self.json_load('keys', default=[])
+
+    def load_part(self, index):
+        result = []
+        if index < len(self._keys):
+            if self._loaded_index.get(index, False) == False:
+                result = self.json_load(str(index), default=[])
+                self.extend(result)
+                self._loaded_index[index] = True
+        return result
 
     def save(self):
         if self._single:
             self.json_save(self._items)
+            return
+
+        size = 0
+        ret = []
+        index = 0
+        for v in self._items:
+            size += get_size(v)
+            ret.append(v)
+            if size > SPLIT_SIZE or v == self._items[len(self._items) - 1]:
+                size = 0
+                self.json_save(ret, str(index))
+                index = index + 1
+                ret.clear()
 
     def __getitem__(self, index):
         """支持索引访问"""
@@ -118,13 +150,12 @@ class ListConfig(BaseConfig):
 
     def remove(self, v):
         return self._items.remove(v)
-
 class DictConfig(BaseConfig):
     def __init__(self, file: str, name: str, single: bool):
         super().__init__(file, name)
 
         self._single = single
-        self._items = {}
+        self._items = OrderedDict()
         if single:
             pass
         else:
@@ -133,10 +164,17 @@ class DictConfig(BaseConfig):
 
     def load(self):
         if self._single:
-            self._items = self.json_load(default={})
+            self._items = self.json_load(default=OrderedDict())
             return
 
-        self._keys = self.json_load('keys', default={}) # key to index
+        self._keys = self.json_load('keys', default=OrderedDict()) # key to index
+
+    def load_part(self, key):
+        index = self._keys.get(key)
+        if index is not None:
+            if self._loaded_index.get(index, False) == False:
+                self._items.update(self.json_load(str(index), default=OrderedDict()))
+                self._loaded_index[index] = True
 
     def save(self, sorted_keys=None):
         if self._single:
@@ -144,30 +182,23 @@ class DictConfig(BaseConfig):
             return
         keys = self._items.keys()
         if sorted_keys is None:
-            sorted_keys = sorted(keys)
+            sorted_keys = keys
 
         size = 0
         index = 0
         ret = {}
-        key_index = {}
+        self._keys.clear()
         for key in sorted_keys:
             if self._items.get(key):
                 size += get_size(self._items[key])
                 ret[key] = self._items[key]
-                key_index[key] = index
+                self._keys[key] = index
                 if size > SPLIT_SIZE or key == sorted_keys[len(sorted_keys) - 1]:
                     self.json_save(ret, str(index))
                     size = 0
                     index = index + 1
                     ret.clear()
-        self.json_save(key_index, "keys")
-
-    def load_part(self, key):
-        index = self._keys.get(key)
-        if index is not None:
-            if self._loaded_index.get(index, False) == False:
-                self._items.update(self.json_load(str(index), default={}))
-                self._loaded_index[index] = True
+        self.json_save(self._keys, "keys")
 
     def get(self, key):
         self.load_part(key)
@@ -180,6 +211,19 @@ class DictConfig(BaseConfig):
 
     def update(self, v):
         self._items.update(v)
+
+    def items(self):
+        return self._items.items()
+
+    def values(self):
+        return self._items.values()
+
+    def __getitem__(self, index):
+        """支持索引访问"""
+        return self._items[index]
+
+    def __sizeof__(self) -> int:
+        return len(self._items)
 
 class DataConfig(BaseConfig):
     def __init__(self, file: str, name: str, default):

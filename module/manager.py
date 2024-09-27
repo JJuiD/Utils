@@ -1,6 +1,8 @@
 # 插件管理器
 import traceback
 from typing import Final
+
+from flask import Flask
 from define import singleton
 from module.base import ModuleBase
 from module.rss import RSSModule
@@ -46,3 +48,7 @@ class _ModuleManager:
 
 ModuleManager = _ModuleManager()
 ModuleManager.register(RSSModule('rss'))
+
+
+
+

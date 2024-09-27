@@ -3,12 +3,15 @@ function showContent(page, element) {
     // 获取主内容区域的元素
     var mainContent = document.getElementById('main-content');
     if (mainContent == null) return;
-    fetch('/home/'.concat(page))
+    fetch('/'.concat(page))
         .then(function (response) {
             return response.text();
         })
         .then(function (html) {
             mainContent.innerHTML = html;
+            if (page == 'rss') {
+                showRSSContente(0);
+            }
         })
         .catch(function (error) {
             return console.error('Error loading content:', error);
@@ -20,6 +23,32 @@ function showContent(page, element) {
     });
     // 给当前点击的按钮添加 active 类
     element.classList.add('active');
+}
+
+function showRSSContente(index) {
+    // 获取模板内容
+    var template = document.getElementsByTagName('template');
+    const content = document.getElementsByClassName('rss-list');
+
+    fetch('/rss_page?index='.concat(index)).then(function (data) {
+        for (const item in data) {
+            var node = template[0].content.cloneNode(true);
+            // 设置邮件项中的数据
+            var rssItem = node.querySelector('.item');
+            rssItem.setAttribute('onclick', `onUpdateDisplay('rss', 'rss-display', ${item.md5})`);
+            rssItem.setAttribute('id', item.md5);
+            node.querySelector('.web').textContent = item.web_title;
+            node.querySelector('.title').textContent = item.title;
+            node.querySelector('.published').textContent = item.published;
+            node.querySelector('.jbutton').setAttribute('onclick', `jumpTo('rss', ${item.md5}); event.stopPropagation();`);
+            node.querySelector('.cbutton').setAttribute('onclick', `deleteItem('rss', ${item.md5}); event.stopPropagation();`);
+            content.appendChild(node);
+        }
+
+        if (data.length > 0) {
+            showRSSContente(index + 1);
+        }
+    });
 }
 // 定义一个可复用的邮件组件
 // function createRSSItem(rss) {
