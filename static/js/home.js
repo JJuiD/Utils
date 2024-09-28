@@ -3,7 +3,7 @@ function showContent(page, element) {
     // 获取主内容区域的元素
     var mainContent = document.getElementById('main-content');
     if (mainContent == null) return;
-    fetch('/'.concat(page))
+    fetch('/home/'.concat(page))
         .then(function (response) {
             return response.text();
         })
@@ -30,25 +30,38 @@ function showRSSContente(index) {
     var template = document.getElementsByTagName('template');
     const content = document.getElementsByClassName('rss-list');
 
-    fetch('/rss_page?index='.concat(index)).then(function (data) {
-        for (const item in data) {
-            var node = template[0].content.cloneNode(true);
-            // 设置邮件项中的数据
-            var rssItem = node.querySelector('.item');
-            rssItem.setAttribute('onclick', `onUpdateDisplay('rss', 'rss-display', ${item.md5})`);
-            rssItem.setAttribute('id', item.md5);
-            node.querySelector('.web').textContent = item.web_title;
-            node.querySelector('.title').textContent = item.title;
-            node.querySelector('.published').textContent = item.published;
-            node.querySelector('.jbutton').setAttribute('onclick', `jumpTo('rss', ${item.md5}); event.stopPropagation();`);
-            node.querySelector('.cbutton').setAttribute('onclick', `deleteItem('rss', ${item.md5}); event.stopPropagation();`);
-            content.appendChild(node);
-        }
+    fetch('/rss/page?index='.concat(index))
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            for (const item of data) {
+                var node = template[0].content.cloneNode(true);
+                // 设置邮件项中的数据
+                var rssItem = node.querySelector('.item');
+                rssItem.setAttribute('onclick', `onUpdateDisplay('rss', 'rss-display', '${item.id}')`);
+                rssItem.setAttribute('id', item.id);
+                node.querySelector('.web').textContent = item.web_title;
+                node.querySelector('.title').textContent = item.title;
+                node.querySelector('.published').textContent = item.published;
+                node.querySelector('.jbutton').setAttribute(
+                    'onclick',
+                    `window.open('${item.link}', "_blank");; event.stopPropagation();`
+                );
+                node.querySelector('.cbutton').setAttribute(
+                    'onclick',
+                    `deleteItem('rss', '${item.id}'); event.stopPropagation();`
+                );
+                if (item.is_read == 1) {
+                    node.querySelector('.red-dot').remove();
+                }
+                content[0].appendChild(node);
+            }
 
-        if (data.length > 0) {
-            showRSSContente(index + 1);
-        }
-    });
+            // if (data.length > 0) {
+            //     showRSSContente(index + 1);
+            // }
+        });
 }
 // 定义一个可复用的邮件组件
 // function createRSSItem(rss) {
@@ -83,38 +96,39 @@ function showRSSContente(index) {
 
 var display_now_key = '';
 var display_next_key = [];
-function onUpdateDisplay(module, display_name, key) {
+function onUpdateDisplay(module, display_name, id) {
     const content = document.getElementById(display_name);
 
-    var display_key = `${module}_${display_name}_${key}`;
+    var display_key = `${module}_${display_name}_${id}`;
     if (display_now_key == display_key) {
         return;
     } else if (display_now_key != '') {
-        display_next_key = [module, display_name, key];
+        display_next_key = [module, display_name, id];
         return;
     }
 
     display_now_key = display_key;
-    console.log('module', module, display_name, key);
-    fetch(`/json?module=${module}&key=${key}`)
+    console.log('module', module, display_name, id);
+    fetch(`/json?module=${module}&key=${id}`)
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
-            console.log('comment', data.summary, data.comment);
-            content.innerHTML = data.summary;
-            if (typeof data.comment === 'string' && data.comment.length > 0) {
-                const iframe = document.createElement('iframe');
-                iframe.classList.add('rss-iframe');
-                iframe.src = data.comment; // 替换为你想要加载的 URL
-                iframe.onload = () => {
-                    console.log('Iframe 加载完成!');
-                    // iframe.contentWindow.scrollTo(0, 0); // 滚动到顶部
-                    // iframe.style.height = '3000px';
-                };
+            const item = document.getElementById(id);
+            item.querySelector('.red-dot')?.remove();
+            content.innerHTML = data.comment;
+            // if (typeof data.comment === 'string' && data.comment.length > 0) {
+            //     const iframe = document.createElement('iframe');
+            //     iframe.classList.add('rss-iframe');
+            //     iframe.src = data.comment; // 替换为你想要加载的 URL
+            //     iframe.onload = () => {
+            //         console.log('Iframe 加载完成!');
+            //         // iframe.contentWindow.scrollTo(0, 0); // 滚动到顶部
+            //         // iframe.style.height = '3000px';
+            //     };
 
-                content.appendChild(iframe);
-            }
+            //     content.appendChild(iframe);
+            // }
             display_now_key = '';
             content.scrollTop = 0;
             if (display_next_key.length > 0) {
@@ -125,9 +139,9 @@ function onUpdateDisplay(module, display_name, key) {
         });
 }
 
-function deleteItem(module, md5) {
-    // if (confirm(`确定要删除 ${md5} 吗？`)) {}
-    const item = document.getElementById(md5);
+function deleteItem(module, id) {
+    // if (confirm(`确定要删除 ${id} 吗？`)) {}
+    const item = document.getElementById(id);
     if (item) {
         item.classList.add('fade-out'); // 添加动画类
         // 动画结束后删除元素
@@ -139,7 +153,7 @@ function deleteItem(module, md5) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ module: module, key: md5 }),
+                    body: JSON.stringify({ module: module, key: id }),
                 }).then(function (data) {
                     item.remove(); // 从 DOM 中删除元素
                 });
@@ -149,7 +163,7 @@ function deleteItem(module, md5) {
     }
 }
 
-function jumpTo(module, md5) {}
+function jumpTo(module, id) {}
 
 function onClickModeToggleSwitch() {
     const body = document.querySelector('body');

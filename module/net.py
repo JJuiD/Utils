@@ -13,7 +13,7 @@ class _AppNet:
 
     def run(self, app, debug=False):
         self._app = app
-        self._app.run(debug=debug)
+        self._app.run(host='0.0.0.0', port=5000, debug=debug)
 
     @property
     def app(self) -> Flask:

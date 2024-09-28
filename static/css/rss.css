@@ -41,12 +41,6 @@ h1 {
     border: none; /* 可选：去掉边框 */
 }
 
-/* 隐藏 Webkit 滚动条 */
-.rss-display::-webkit-scrollbar {
-    display: none; /* 完全隐藏滚动条 */
-}
-
-
 .item {
     position: relative;
     width: (100% - 20px);
@@ -136,12 +130,13 @@ h1 {
 
 .red-dot {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    background-color: red;
+    top: -7.5px;
+    right: -7.5px;
+    width: 15px;
+    height: 15px;
+    background-color: rgba(200, 0, 0, 0.8);
     border-radius: 50%;
+    box-shadow: 1px 1px 2px black;
 }
 
 .fade-out {

@@ -1,6 +1,7 @@
 import atexit
 from datetime import datetime
 from flask import Flask, jsonify, render_template, url_for, request
+# from flask_cors import CORS
 from markupsafe import escape
 
 
@@ -9,23 +10,23 @@ from module.net import AppNet
 
 app = Flask(__name__)
 
+# CORS(app)
 
-def format_date(date_str):
-    # 将字符串转换为日期对象
-    date = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
-    # 格式化为所需的字符串
-    return date.strftime("%Y年%m月%d日 %H:%M:%S")
-
-@app.route('/')
+@app.route('/home')
 def home():
     css_url = url_for('static', filename='css/home.css')
     js_url = url_for('static', filename='js/home.js')
     return render_template('home.html', css_url=css_url, js_url=js_url)
 
-@app.route('/<page>')
-def page(page):
+@app.route('/home/<page>')
+def home_page(page):
     css_url = url_for('static', filename=f'css/{page}.css')
     return render_template(f'home/{page}.html', css_url=css_url, data=ModuleManager.open(page))
+
+@app.route('/rss/page')
+def rss_page():
+    index = request.args.get('index', type=int)
+    return jsonify(ModuleManager.get_module('rss').get_history(index))
 
 @app.route('/json')
 def json_get():
@@ -37,7 +38,7 @@ def json_get():
 def delete_item():
     data = request.json
 
-    if data:
+    if request.remote_addr == '127.0.0.1' and data:
         ModuleManager.get_module(data["module"]).delete_item(data["key"])
         return jsonify({"message": "Post successful"}), 204  # 204 No Content
     else:

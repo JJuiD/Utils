@@ -7,14 +7,15 @@ from datetime import datetime
 
 from module.net import AppNet
 
-GMT0800_FORMAT = "%a, %d %b %Y %H:%M:%S +0800"
-UPDATE_TIME = "Thu, 18 Sep 2024 16:33:40 +0800"
+GMT0800_FORMAT: Final = "%a, %d %b %Y %H:%M:%S +0800"
+ISO8601_FORMAT: Final = "%Y-%m-%dT%H:%M:%SZ"
+UPDATE_TIME: Final = "Thu, 18 Sep 2024 16:33:40 +0800"
 
-_now_time: datetime = None
+# _now_time: datetime = None
 
-def calc_lerptime(strptime: datetime):
-    global _now_time
-    return (strptime - _now_time).total_seconds()
+# def calc_lerptime(strptime: datetime):
+#     global _now_time
+#     return (strptime - _now_time).total_seconds()
 
 def rss_sort(item):
     dateStr = item["published"]
@@ -32,20 +33,44 @@ def string_to_md5(input_string: str):
     # 获取十六进制表示的哈希值
     return md5_hash.hexdigest()
 
-class _RSSUrl:
-    def __init__(self, module, url: str, seconds: int):
+class _RSSParse:
+    def __init__(self, module, data):
         self._module = module
-        self._url = url
-        self._seconds = seconds
-        self._over = False
+        # self._url = url
+        self._data = data
+        # self._over = False
 
+    @property
+    def url(self):
+        return self._data["url"]
+
+    @property
+    def time_format(self):
+        return self._data["time_format"]
+
+    @property
+    def content_get(self):
+        return self._data["content"]
+
+    def check_parse(self):
+        pass
+
+    def calc_lerptime(self, strptime: datetime):
+        feed_time = datetime.strptime(self._module.feeds[self.url], GMT0800_FORMAT)
+        return (strptime - feed_time).total_seconds()
+
+    def parse(self) -> list:
+        pass
+
+class _FeedParser(_RSSParse):
     def parse(self):
-        feed = feedparser.parse(self._url)
+        entries = []
+        feed = feedparser.parse(self.url)
         if feed.bozo == 0 or feed.bozo is False:
-            entries = []
             # published = None
             for entry in feed.entries:
-                seconds = self._module.calc_lerptime(datetime.strptime(entry.published, GMT0800_FORMAT))
+                published_datetime = datetime.strptime(entry.published, self.time_format)
+                seconds = self.calc_lerptime(published_datetime)
                 if seconds > 0:
                     md5 = string_to_md5(entry.link)
 
@@ -53,14 +78,15 @@ class _RSSUrl:
                         "web_title": feed.feed.title,
                         "title": entry.title,
                         "link": entry.link,
-                        "published": entry.published,
-                        "md5": md5,
+                        "published": published_datetime.strftime("%Y年%m月%d日 %H:%M:%S"),
+                        "id": md5,
                         "is_read": 0,
-                        "summary": entry.summary,
+                        # "summary": entry.summary,
                     }
+                    rss_item["comment"] = self.content_get(entry)
 
-                    if hasattr(entry, "comments"):
-                        rss_item["comment"] = entry.comments
+                    # if hasattr(entry, "comments"):
+                    #     rss_item["comment"] = entry.comments
 
                     entries.append(rss_item)
                 else:
@@ -70,15 +96,42 @@ class _RSSUrl:
             #     self._updateTimeStr = published
             #     self._nowTimeStruct = datetime.strptime(self._updateTimeStr, GMT0800_FORMAT)
                 # self.setting()
-            return entries
-        return None
+        return entries
 
-RSSLimit: Final = 10
 
+RSSLimit: Final = 50
+RSSFeedUrls: Final = [
+    {
+        # "cls": _FeedParser,
+        "url": "http://www.gcores.com/rss",
+        "lerp_time": 60*60*24,
+        "time_format": GMT0800_FORMAT,
+        "content": lambda entry: entry.summary
+    },
+    {
+        # "cls": _FeedParser,
+        "url": "https://indienova.com/feed/",
+        "lerp_time": 60*60*24,
+        "time_format": GMT0800_FORMAT,
+        "content": lambda entry: entry.content[0]['value'] if len(entry.content) > 0 else None
+    },
+    {
+        # "cls": _FeedParser,
+        "url": "http://www.ruanyifeng.com/blog/atom.xml",
+        "lerp_time": 60*60*24,
+        "time_format": ISO8601_FORMAT,
+        "content": lambda entry: entry.content[0]['value'] if len(entry.content) > 0 else None
+    }
+]
+
+RSSFeedTime: Final = {}
+
+for data in RSSFeedUrls:
+    RSSFeedTime[data["url"]] = UPDATE_TIME
 
 class RSSModule(ModuleBase):
     _nowTimeStruct: datetime
-    _urls: list[_RSSUrl]
+    _urls: list[_RSSParse]
 
     _setting: DataConfig
     _history: ListConfig
@@ -86,16 +139,19 @@ class RSSModule(ModuleBase):
 
     def init(self):
         self._urls = []
-        self._urls.append(_RSSUrl(self, "http://www.gcores.com/rss", 60*60*24))
-        self._urls.append(_RSSUrl(self, "https://indienova.com/feed/", 60*60*24))
+        for data in RSSFeedUrls:
+            self._urls.append(_FeedParser(self, data))
+        # self._urls.append(_FeedParser(self, "https://indienova.com/feed/", 60*60*24))
+        # self._urls.append(_FeedBurner(self, "http://feeds.feedburner.com/ruanyifeng", 60*60*24))
         self._setting = DataConfig("setting", self.name, {
+            "feeds": RSSFeedTime,
             "updatetime": UPDATE_TIME,
             "count": 0,
             "delete_read": 1
         })
-        self._history = ListConfig("history", self.name, False, sort_f=rss_sort)
 
-        AppNet.app.add_url_rule('/rss_page', self.get_history)
+        self._history = ListConfig("history", self.name, True)
+
         # self._summary = DictConfig("summary", self.name, False)
 
         # test
@@ -106,7 +162,6 @@ class RSSModule(ModuleBase):
         # self.refresh_item()
 
     def open(self):
-        print("open(self)", self.is_first)
         if self.is_first:
             self._setting.load()
             self._history.load()
@@ -114,12 +169,15 @@ class RSSModule(ModuleBase):
         self.refresh_item()
         return
 
-    def get_history(self):
-        index = request.args.get('index', type=int)
-        return self._history.load_part(index)
+    def get_history(self, index):
+        return self._history.items
 
     def close(self):
         pass
+
+    @property
+    def feeds(self):
+        return self._setting.value("feeds")
 
     @property
     def updatetime(self):
@@ -129,16 +187,16 @@ class RSSModule(ModuleBase):
     def updatetime(self, value):
         self._setting.value("updatetime", value)
 
-    def calc_lerptime(self, strptime: datetime):
-        now_time = datetime.strptime(self.updatetime, GMT0800_FORMAT)
-        return (strptime - now_time).total_seconds()
+    # def calc_lerptime(self, strptime: datetime):
+    #     now_time = datetime.strptime(self.updatetime, GMT0800_FORMAT)
+    #     return (strptime - now_time).total_seconds()
 
     def delete_item(self, key: str | int):
         # self._history.earse_filter(lambda item: item["md5"] != key)
-        self._history.earse_filter(lambda item: item["md5"] != key)
+        self._history.earse_filter(lambda item: item["id"] != key)
 
     def get_item(self, key: str | int):
-        first_item = self._history.next_filter(lambda item: item["md5"] == key)
+        first_item = self._history.next_filter(lambda item: item["id"] == key)
         if first_item is not None:
             first_item["is_read"] = 1
         # item = self._history.get(key)
@@ -156,7 +214,7 @@ class RSSModule(ModuleBase):
             return
 
         # 优先删除已读的内容
-        read_items = [item for item in self._history if item["is_read"]]
+        read_items = [item for item in self._history if item["is_read"] == 1]
 
         # 删除已读内容
         while len(self._history) > RSSLimit and len(read_items) > 0:
@@ -173,10 +231,12 @@ class RSSModule(ModuleBase):
 
     def refresh_item(self):
         articles = []
+        now_time = datetime.now().strftime(GMT0800_FORMAT)
         for p in self._urls:
             info = p.parse()
-            if info is not None:
+            if len(info) > 0:
                 articles.append(info)
+                self.feeds[p.url] = now_time
 
         # 将新的提要内容写入本地文件
         if len(articles) > 0:
@@ -186,6 +246,6 @@ class RSSModule(ModuleBase):
             self.prune_history()
             self._setting.value("count", len(self._history))
             # self._history.sort(rss_sort)
-            self.updatetime = datetime.now().strftime(GMT0800_FORMAT)
-            print(f"RSS提要已保存, 拉取时间 {datetime.now().strftime(GMT0800_FORMAT)}")
+            self.updatetime = now_time
+            print(f"RSS提要已保存, 拉取时间 {now_time}")
 

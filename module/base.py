@@ -43,7 +43,7 @@ def get_size(d):
 
 
 SPLIT_SIZE: Final = 100*1024
-
+NEW_INDEX: Final = -1
 class BaseConfig:
     def __init__(self, file: str, name: str):
         self._file = file
@@ -81,7 +81,7 @@ class BaseConfig:
             json.dump(data, file, indent=4)
 
 class ListConfig(BaseConfig):
-    def __init__(self, file: str, name: str, single: bool, sort_f):
+    def __init__(self, file: str, name: str, single: bool):
         super().__init__(file, name)
 
         self._items = []
@@ -89,7 +89,7 @@ class ListConfig(BaseConfig):
         # self._sorted = sort_f
 
         if not single:
-            self._keys: list = []
+            self._keys: dict = {}
             self._loaded_index: dict = {}
 
     def load(self):
@@ -97,7 +97,7 @@ class ListConfig(BaseConfig):
             self._items = self.json_load(default=[])
             return
 
-        self._keys = self.json_load('keys', default=[])
+        self._keys = self.json_load('keys', default={})
 
     def load_part(self, index):
         result = []
@@ -106,6 +106,15 @@ class ListConfig(BaseConfig):
                 result = self.json_load(str(index), default=[])
                 self.extend(result)
                 self._loaded_index[index] = True
+        return result
+
+    def get_part(self, index):
+        self.load_part(index)
+
+        result = []
+        for v in self._items:
+            if self._keys[v["id"]] == index:
+                result.append(v)
         return result
 
     def save(self):
@@ -119,11 +128,13 @@ class ListConfig(BaseConfig):
         for v in self._items:
             size += get_size(v)
             ret.append(v)
+            self._keys[v["id"]] = index
             if size > SPLIT_SIZE or v == self._items[len(self._items) - 1]:
                 size = 0
                 self.json_save(ret, str(index))
                 index = index + 1
                 ret.clear()
+        self.json_save(self._keys, "keys")
 
     def __getitem__(self, index):
         """支持索引访问"""
@@ -136,8 +147,15 @@ class ListConfig(BaseConfig):
     def __len__(self):
         return len(self._items)
 
-    def extend(self, item: list):
-        self._items.extend(item)
+    def extend(self, item_list: list):
+        if self._single:
+            self._items.extend(item_list)
+            return
+
+        for v in item_list:
+            if self._keys.get(v["id"]) == None:
+                self._keys[v["id"]] = NEW_INDEX
+                self._items.append(v)
 
     def earse_filter(self, f):
         self._items = list(filter(f, self._items))
@@ -150,6 +168,11 @@ class ListConfig(BaseConfig):
 
     def remove(self, v):
         return self._items.remove(v)
+
+    @property
+    def items(self):
+        return self._items
+
 class DictConfig(BaseConfig):
     def __init__(self, file: str, name: str, single: bool):
         super().__init__(file, name)
