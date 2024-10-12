@@ -194,11 +194,13 @@ class RSSModule(ModuleBase):
     def delete_item(self, key: str | int):
         # self._history.earse_filter(lambda item: item["md5"] != key)
         self._history.earse_filter(lambda item: item["id"] != key)
+        self._history.save()
 
     def get_item(self, key: str | int):
         first_item = self._history.next_filter(lambda item: item["id"] == key)
         if first_item is not None:
             first_item["is_read"] = 1
+            self._history.save()
         # item = self._history.get(key)
         # if item is not None:
         #     item["is_read"] = 1
@@ -207,7 +209,6 @@ class RSSModule(ModuleBase):
     def on_app_quit(self):
         self._setting.save()
         self._history.save()
-
 
     def prune_history(self):
         if len(self._history) < RSSLimit:
@@ -247,5 +248,8 @@ class RSSModule(ModuleBase):
             self._setting.value("count", len(self._history))
             # self._history.sort(rss_sort)
             self.updatetime = now_time
+
+            self._setting.save()
+            self._history.save()
             print(f"RSS提要已保存, 拉取时间 {now_time}")
 

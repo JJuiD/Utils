@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # CORS(app)
 
-@app.route('/home')
+@app.route('/')
 def home():
     css_url = url_for('static', filename='css/home.css')
     js_url = url_for('static', filename='js/home.js')

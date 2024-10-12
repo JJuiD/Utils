@@ -1,10 +1,10 @@
 {
     "feeds": {
-        "http://www.gcores.com/rss": "Sat, 28 Sep 2024 18:19:20 +0800",
-        "https://indienova.com/feed/": "Sat, 28 Sep 2024 16:22:07 +0800",
-        "http://www.ruanyifeng.com/blog/atom.xml": "Sat, 28 Sep 2024 16:22:07 +0800"
+        "http://www.gcores.com/rss": "Sat, 12 Oct 2024 15:47:51 +0800",
+        "https://indienova.com/feed/": "Sat, 12 Oct 2024 15:47:51 +0800",
+        "http://www.ruanyifeng.com/blog/atom.xml": "Sat, 12 Oct 2024 15:47:51 +0800"
     },
-    "updatetime": "Sat, 28 Sep 2024 18:19:20 +0800",
-    "count": 34,
+    "updatetime": "Sat, 12 Oct 2024 15:47:51 +0800",
+    "count": 40,
     "delete_read": 1
 }
